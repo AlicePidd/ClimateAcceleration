@@ -23,16 +23,17 @@
   
 # Folders ----------------------------------------------------------------------
 
-  oisst_fol <- make_folder(source_disk, "1_CMIP_regridded_OISST_DBC_sst_annual_Aus", "") # From Dave
-  vocc_fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From Dave
+  sst_fol <- make_folder(source_disk, "1_CMIP_regridded_OISST_DBC_sst_annual_Aus", "") # From Dave
+  vocc_fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "")
+  vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "")
   
   
   
 # Get files --------------------------------------------------------------------
   
-  files <- dir(oisst_fol, full.names = TRUE)
-  f <- files[67] # Just pick a file
+  files <- dir(sst_fol, full.names = TRUE)
+  # f <- files[67] # Just pick a file
   
   
   
@@ -43,47 +44,70 @@
     seq(yr-10, yr+10, by = 1)
   }
   
-  range <- 2021:2090
-  years <- map(range, make_rolling_seq)
-  years
+  all_range <- 2021:2090 # Whole timeseries
+  near_range <- 2021:2040 
+  mid_range <- 2041:2060
+  int_range <- 2061:2080
+  long_range <- 2080:2090
   
-  
-  # yrs <- years
+  all_years <- map(all_range, make_rolling_seq)
+  near_years <- map(near_range, make_rolling_seq)
+  mid_years <- map(mid_range, make_rolling_seq)
+  int_years <- map(int_range, make_rolling_seq)
+  long_years <- map(long_range, make_rolling_seq)
   
 
   
   
-# Load velocity functions ------------------------------------------------------
+# Source the velocity functions ------------------------------------------------
   
   dir(vocc_fns_fol, full.names = TRUE) %>% 
     map(source)
 
   
-  ## Velocity function ---------------
+
+# Compute velocity -------------------------------------------------------------
     # Compute grid cell velocity for each period, by calculating the rolling velocity for the surrounding 10 years of each year that is within each period (i.e., to calculate the velocity for the first year in the near-term, 2021, we calculate the velocities each of the 10 years prior and after, so between 2011-2031, with 2021 being the middle year)
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
-
-    files <- dir(oisst_fol, full.names = TRUE)
-    # f <- files[67] # Just pick a file
-    indexing <- 1:length(years) # So it knows what year to name each layer
-    # i = 1
+  files <- dir(sst_fol, full.names = TRUE)
+  # indexing <- 1:length(years) # So it knows what year to name each layer
+  term = "mid"
+  f <- files[67]
+  
+  get_velocity <- function(f, yrs, term) {
     
-    get_velocity <- function(f, yrs, i) {
-      
-      esm <- basename(f) %>% 
-        str_split_i(., "_", 3)
-      ssp <- basename(f) %>% 
-        str_split_i(., "_", 4)
-      indexing <- seq_along(yrs)
-      # nm_yr <- map(years, `[[`, 11)[i] # get the year at teh 11th position in the list of years, i.e. the year we are computing velocity for
-      
-      spt_raster <- rast(f) %>% 
-        crop(., e1) # Crop
-      spt_raster <- mask(spt_raster, raus) # Mask
-      names(spt_raster) <- time(spt_raster) %>% 
-        year()
-      
+    esm <- basename(f) %>% 
+      str_split_i(., "_", 3)
+    ssp <- basename(f) %>% 
+      str_split_i(., "_", 4)
+    term <- term
+    
+    if(term == "near") {
+      yrs <- near_years
+      range <- near_range
+    } else if(term == "mid") {
+      yrs <- mid_years
+      range <- mid_range
+    } else if(term == "intermediate") {
+      yrs <- int_years
+      range <- int_range
+    } else if(term == "long") {
+      yrs <- long_years
+      range <- long_range
+    } else if(term == "all") {
+      yrs <- long_years
+      range <- long_range
+    }
+
+    indexing <- seq_along(yrs)
+    
+    spt_raster <- rast(f) %>% 
+      crop(., e1) # Crop
+    spt_raster <- mask(spt_raster, raus) # Mask
+    names(spt_raster) <- time(spt_raster) %>% 
+      year()
+    
       compute <- function(i) {
         r <- terra::subset(spt_raster, yrs[[i]] %>% unlist() %>% as.character()) # Get only the data for the years we need
         spt_grad <- spatGrad(r)
@@ -94,38 +118,32 @@
         names(out) <- paste0(nm_yr, "_", ssp, "_", esm)
         return(out)
       }
-      
-      result <- map(indexing, compute) %>% 
-        rast()
-      saveRDS(result, 
-              file = paste0(vocc_fol, "vocc_yearly_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS"))
-      
-    }
     
-    tic()
-    walk(files[67], ~get_velocity(.x, years, indexing)) 
-    toc() # 4 min per file in BigMac
+    result <- map(indexing, compute) %>% 
+      rast()
+    saveRDS(result, 
+            if(term == "near" || term == "mid" || term == "intermediate" || term == "long") {
+              file = paste0(vocc_term_fol, "vocc_yearly_", ssp, "_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
+            } else if(term == "all") {
+              file = paste0(vocc_fol, "vocc_yearly_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS")
+              })
+  }
+  
+  # Full projected time series
+  tic()
+  walk(files, ~get_velocity(.x, years, "all")) 
+  toc() # 31 min per file on Alice's machine
 
-
-    
-  # ## Checking out why there are -Inf and Inf values... -----------------
-  #   
-  #   e <- readRDS("/Volumes/AliceShield/acceleration_data/2_vocc_rolling_annual/vocc_yearly_ssp585_NorESM2-MM_2021-2090.RDS")
-  #   plot(e)
-  #   ee <- ifel(e != Inf & e != -Inf, NA, 1)
-  #   plot(ee, col = "red")
-  #   
-  #   t <- rast("/Volumes/AliceShield/acceleration_data/1_CMIP_regridded_OISST_DBC_sst_annual_Aus/tos_Oyear_NorESM2-MM_ssp585_r1i1p1f1_RegriddedBiasCorrectedAus_19820101-21001231.nc")
-  #   names(t) <- time(t) %>% 
-  #     year()
-  #   yrs <- as.character(2011:2050)
-  #   t <- terra::subset(t, yrs)
-  #   plot(t)
-  #   min(t)
-  #   max(t)
-  #   tt <- is.na(t)
-  #   plot(tt[[1:10]])
-  #   plot(tt[[11:20]])
-  #   plot(tt[[21:30]])
-  #   plot(tt[[31:40]])
-    
+  # By terms
+  tic()
+  walk(term_list[2:5], function(term) {
+    message("Processing: ", term, "-term")
+    walk(files, ~get_velocity(.x, years, term))
+  })
+  toc()
+  
+    # tic()
+    # walk(files, ~get_velocity(.x, years, "near")) 
+    # toc() # 9 min per term on Alice's machine
+  
+  
