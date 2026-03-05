@@ -8,7 +8,8 @@
 # Packages ---------------------------------------------------------------------
 
 pacman::p_load(pacman, tidyverse, purrr, furrr, ncdf4, terra, sf, tmap, beepr, tictoc,  parallel, parallelly, patchwork, ggrepel, ggthemes, rmapshaper, lwgeom, progressr, data.table, vegan, vctrs, gplots, mgcv, mgcViz, glmmTMB, gratia,  
-               viridis, viridisLite, MoMAColors, PNWColors, NatParksPalettes, rcartocolor, ltc, scico, rcartocolor, MetBrewer, feathers, futurevisions, paletteer#,
+               viridis, viridisLite, MoMAColors, PNWColors, NatParksPalettes, rcartocolor, ltc, scico, rcartocolor, MetBrewer, feathers, futurevisions, paletteer,
+               CircStats
                # gglm, boot, GGally, MASSExtra, visreg, marginaleffects, 
                # glmmTMB, sdmTMB, gstat, spdep, DHARMa, performance, inlabru, modelbased # From the R workshop on spatiotemporal autocorrelation
                )

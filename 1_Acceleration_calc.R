@@ -1,6 +1,7 @@
-# Looking at velocity 
-    # Written by Alice Pidd
-        # Mar 2026
+# Computing velocity and climate acceleration from annual OISST layers
+  # Written by Dave S and Alice P
+    # 5 March 2026
+
 
 
 # Questions:
@@ -15,123 +16,110 @@
 
   source("Helpers.R")
   source_disk <- "/Volumes/AliceShield/acceleration_data"
+  source("Background_data.R")
+  
+  
+  
+  
+# Folders ----------------------------------------------------------------------
+
+  oisst_fol <- make_folder(source_disk, "1_CMIP_regridded_OISST_DBC_sst_annual_Aus", "") # From Dave
+  vocc_fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From Dave
+  vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "") # From Dave
+  acc_fol <- make_folder(source_disk, "3_acceleration_global", "") # From Dave
+  acc_crop_fol <- make_folder(source_disk, "3_acceleration_aus", "") # From Dave
+  
+  
+  
+  
+# Get files --------------------------------------------------------------------
+  
+  files <- dir(oisst_fol, full.names = TRUE)
+  f <- files[67] # Just pick a file
+  
+  
+  
+
+# A sliding window and get the years for one period ----------------------------
+  
+  make_rolling_seq <- function(yr) {
+    seq(yr-10, yr+10, by = 1)
+  }
+  
+  range <- 2021:2090
+  years <- map(range, make_rolling_seq)
+  years
+  
+  # yrs <- years
+  
 
   
   
-# Folders and data -------------------------------------------------------------
+# Load velocity functions ------------------------------------------------------
+  
+  dir(vocc_fns_fol, full.names = TRUE) %>% 
+    map(source)
 
-  mag_fol <- make_folder(source_disk, "0_VoCC_mag_layers", "") # Alice
-  tos_fol <- make_folder(source_disk, "tos_yearmean", "") # Dave
   
-  
-  
-# Dave way ---------------------------------------------------------------------
-  # Calculating acceleration between t2 and t1, as the slope of the line (rate of change) along a 20-year series of climate velcoity, rolling by 1 year (i.e., slope of velocity of )
-  
-  # Need to:
-    # Get a list of 20-year blocks, rolling forward by 1 year
-    # isolate each block
-    # calculate the slope of velocity for data in each block
-    # Save it
-  
-  
-  files <- dir(tos_fol, full.names = TRUE)
-  files  
-  
-    # start_yr <- basename(files[1]) %>% 
-    #   str_split_i(., "_", 7) %>% 
-    #   str_remove(., ".nc") %>% 
-    #   str_split_i(., "-", 1) %>% 
-    #   str_sub(., start = 1L, end = 4L) %>%  # Get the chrs in these positions
-    #   as.numeric()
-    # 
-    # end_yr <- basename(files[1]) %>% 
-    #   str_split_i(., "_", 7) %>% 
-    #   str_remove(., ".nc") %>% 
-    #   str_split_i(., "-", 2) %>% 
-    #   str_sub(., start = 1L, end = 4L) %>% # Get the chrs in these positions
-    #   as.numeric()
-  
-  
-  
-  ## Making a rolling sequence for the 21 year series for which I compute the slope of velocity per series ------------
-  
-    make_rolling_seq <- function(i, start_yr, end_yr) {
-      yr_seq <- seq(start_yr, end_yr, by = 1)
-      start <- yr_seq[i]
-      end <- yr_seq[i] + 20 # Only + 20 not 21 here because we include the starting year
-      roll <- tibble(start, end) # Put it in a tibble
-      return(roll)
-    }
-    
-    nums <- seq(1, 86, by = 1) # 86 because anything after this would create a block outside 2100
-    rolling_seq <- make_rolling_seq(nums, 1995, 2100) %>% 
-      list()
-    saveRDS(rolling_seq, file = paste0(helper_fol, "/rolling_sequence.RDS"))
-  
-  
-    
-  ## Get only the data in each block ------------
-    
-    r <- rast(files[1])
-    r
-    
-    yrs <- seq(1995, 2100, by = 1)
-    names(r) <- yrs
+  ## Velocity function ---------------
+    # Compute grid cell velocity for each period, by calculating the rolling velocity for the surrounding 10 years of each year that is within each period (i.e., to calculate the velocity for the first year in the near-term, 2021, we calculate the velocities each of the 10 years prior and after, so between 2011-2031, with 2021 being the middle year)
+    # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
+  compute_acceleration <- function () {
+  
+    files <- dir(oisst_fol, full.names = TRUE)
+    f <- files[67] # Just pick a file
+    indexing <- 1:70 # So it knows what year to name each layer
+    # i = 1
+    
+    get_velocity <- function(f, yrs, i) {
       
-  
+      esm <- basename(f) %>% 
+        str_split_i(., "_", 3)
+      ssp <- basename(f) %>% 
+        str_split_i(., "_", 4)
+      nm_yr <- map(years, `[[`, 11)[i] # get the year at teh 11th position in the list of years, i.e. the year we are computing velocity for
 
-# Alice way --------------------------------------------------------------------  
-  # Calculating acceleration between t2 and t1 using the equation a = (vf - vi) / ∆t
-    # For when I calculate it between 
-  
-  
-  ## Load velocity layers ------------------------------------------------------
+      compute <- function(i) {
+        spt_raster <- rast(f) %>% 
+          crop(., e1)
+        spt_raster <- mask(spt_raster, raus)
+        names(spt_raster) <- time(spt_raster) %>% 
+          year()
+        
+        r <- terra::subset(spt_raster, yrs %>% unlist() %>% as.character()) # Get only the data for the years we need
+        spt_grad <- spatGrad(r)
+        tmp_trend <- tempTrend(r, 3)
+        out <- gVoCC(tmp_trend, spt_grad) %>% 
+          terra::subset(1)
+        names(out) <- paste0(nm_yr, "_", ssp, "_", esm)
+        return(out)
+      }
+      
+      result <- map(indexing, compute)
+      # bits <- basename(f) %>% str_split(., "_")
+      # saveRDS(result, file = paste0(vocc_fol, "vocc_yearly_", bits[[1]][4], "_", bits[[1]][3], "_", min(range), "-", max(range), ".RDS"))
+      
+    }
+    # indexing <- 1:70 # So it knows what year to name each layer
     
-    files <- dir(mag_fol, full.names = TRUE, pattern = "ACCESS-CM2")
-    files  
+    vels <- map(files[66:67], ~get_velocity(.x, years, indexing)) #%>% 
+      rast() # Stacks it
+    vels
     
-    p1 <- rast(files[22])[[1]] %>% 
-      crop(e1) %>% 
-      mask(., raus)
-    
-    p2 <- readRDS(files[21])[[1]] %>% 
-      crop(e1) %>% 
-      mask(., raus)
-    
-    p3 <- readRDS(files[19])[[1]] %>% 
-      crop(e1) %>% 
-      mask(., raus)
-    
-    p4 <- readRDS(files[20])[[1]] %>% 
-      crop(e1) %>% 
-      mask(., raus)
-    
-    
-    plot(p1)
-    plot(p2)
-    plot(p3)
-    plot(p4)
-  
 
-  ## Compute acceleration for periods ------------------------------------------
-    # Midpoints (medians) for each period are 20-years apart, so ∆t = 20
-    # For rolling acceleration calc on YEARLY velocity, the midpoints will be 1 year apart (midpoint of 1995-2014 is 2004.5, midpoint of 1996-2015 is 2005.5, so ∆t = 1), so the acceleration calc will be the difference
-    acc1 <- (p2-p1)/20
-    names(acc1) <- "near to mid"
-    # acc1 <- ifel(voccMag <-100)
-    acc2 <- (p3-p2)/20
-    names(acc2) <- "mid to intermediate"
+  }
+  
+  
     
-    acc3 <- (p4-p3)/20
-    names(acc3) <- "intermediate to long"
+  ## Acceleration function ---------------
   
-    plot(c(acc1, acc2, acc3))
-  
-  
-  
-  
-  
-  
-  
+    slope <- tempTrend(vels, 3)  
+    s <- ifel(slope > 100, 100, slope)
+    s <- ifel(s < -100, -100, s)
+    plot(s)
+      
+
+    
+    
+# 
