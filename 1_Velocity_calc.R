@@ -73,7 +73,7 @@
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
   files <- dir(sst_fol, full.names = TRUE)
-  # term = "mid"
+  term = "all"
   # f <- files[67]
   
   get_velocity <- function(f, yrs, term) {
@@ -84,21 +84,12 @@
       str_split_i(., "_", 4)
     term <- term
     
-    if(term == "near") {
-      yrs <- near_years
-      range <- near_range
-    } else if(term == "mid") {
-      yrs <- mid_years
-      range <- mid_range
-    } else if(term == "intermediate") {
-      yrs <- int_years
-      range <- int_range
-    } else if(term == "long") {
-      yrs <- long_years
-      range <- long_range
-    } else if(term == "all") {
-      yrs <- long_years
-      range <- long_range
+    if(term == "all") {
+      range <- all_range # Full time series
+      yrs <- all_years
+    } else {
+      range <- get(paste0(term, "_range")) # Series of years in the term
+      yrs   <- get(paste0(term, "_years")) # Years +10 and -10 either side of the term range
     }
 
     indexing <- seq_along(yrs)
@@ -123,7 +114,7 @@
     result <- map(indexing, compute) %>% 
       rast()
     saveRDS(result, 
-            if(term == "near" || term == "mid" || term == "intermediate" || term == "long") {
+            if(term == "recent" || term == "near" || term == "mid" || term == "intermediate" || term == "long") {
               file = paste0(vocc_term_fol, "vocc_yearly_", ssp, "_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
             } else if(term == "all") {
               file = paste0(vocc_fol, "vocc_yearly_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS")
