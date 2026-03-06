@@ -23,14 +23,10 @@
   
 # Folders ----------------------------------------------------------------------
 
-  vocc_fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "") # Timeseries velocity by esm, ssp
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "") # Velocity by term, esm, ssp
   acc_fol <- make_folder(source_disk, "3_acceleration_aus", "") # Aus files
   # acc_global_fol <- make_folder(source_disk, "3_acceleration_global", "") # Global files
-  
-  
-  
 
   
   
@@ -47,20 +43,21 @@
   long_range <- 2080:2090
   
 
-  files <- dir(vocc_fol, full.names = TRUE) %>%
-    str_subset(., "ssp119", negate = TRUE) %>%
-    str_subset(., "ssp534-over", negate = TRUE)
-  f <- files[1] # Just pick a file
-  
-  yrs <- as.character(mid_range)
-  ssp <- "ssp126"
-  term <- "mid"
+  # # For tests
+  # files <- dir(vocc_fol, full.names = TRUE) %>%
+  #   str_subset(., "ssp119", negate = TRUE) %>%
+  #   str_subset(., "ssp534-over", negate = TRUE)
+  # f <- files[1] # Just pick a file
+  # yrs <- as.character(mid_range)
+  # ssp <- "ssp126"
+  # term <- "mid"
 
+  
     
     
 # Acceleration function --------------------------------------------------------
   
-  get_fast <- function(ssp) {
+  get_fastness <- function(ssp) {
     
     files <- dir(vocc_fol, full.names = TRUE, pattern = ssp) %>% # Get the files for the ssp we are going for
       str_subset(., "ssp119", negate = TRUE) %>% 
@@ -81,11 +78,11 @@
           range <- get(paste0(term, "_range")) # Series of years in the term
         }
         
-        # Subset 
+        # Subset timeseries
         r <- readRDS(f) %>% 
           terra::subset(., str_detect(names(.), paste(range, collapse = "|"))) # Get only the relevant layers per the term years
         
-        # Calculate the slope i.e., acceleration of velocity for each ssp, term, and esm
+        # Calculate the slope i.e., acceleration of velocity, for each ssp, term, and esm
         slope <- tempTrend(r, 3)[[1]] 
         names(slope) <- paste0("slope_", ssp, "_", esm, "_", term) # Name the layers accordingly
         return(slope)
@@ -96,12 +93,13 @@
       map(files, ~do_ssps(.x, term))
     }) %>% 
       flatten() %>%  # Flatten the nested list (terms x files) into a single list (Claude's idea)
-      rast()
-    saveRDS(out, file = paste0(acc_fol, "acceleration_yearly_", ssp, "_aus.RDS"))
+      rast() # Stack it
+    saveRDS(out, file = paste0(acc_fol, "acceleration_yearly_", ssp, "_aus.RDS")) # Save each SSP file
+      # Each file has 52 layers: 1 per ESM, SSP, term combo
   }
   
   tic()
-  walk(ssp_list, get_fast)
+  walk(ssp_list, get_fastness)
   toc()
   
 
