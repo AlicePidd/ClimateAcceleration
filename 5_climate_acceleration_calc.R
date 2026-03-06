@@ -23,10 +23,19 @@
   
 # Folders ----------------------------------------------------------------------
 
+  fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "") # Timeseries velocity by esm, ssp
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "") # Velocity by term, esm, ssp
   acc_fol <- make_folder(source_disk, "3_acceleration_aus", "") # Aus files
   # acc_global_fol <- make_folder(source_disk, "3_acceleration_global", "") # Global files
+
+  
+  
+  
+# Source the velocity functions ------------------------------------------------
+  
+  dir(fns_fol, full.names = TRUE, pattern = "tempTrend") %>% # Get just the one fn
+    map(source)
 
   
   
@@ -39,7 +48,7 @@
   recent_range <- 1995:2014 # OISST (reality) term
   near_range <- 2021:2040 # Projection terms
   mid_range <- 2041:2060
-  int_range <- 2061:2080
+  intermediate_range <- 2061:2080
   long_range <- 2080:2090
   
 
@@ -49,7 +58,7 @@
   #   str_subset(., "ssp534-over", negate = TRUE)
   # f <- files[1] # Just pick a file
   # yrs <- as.character(mid_range)
-  # ssp <- "ssp126"
+  ssp <- "ssp126"
   # term <- "mid"
 
   
@@ -62,6 +71,7 @@
     files <- dir(vocc_fol, full.names = TRUE, pattern = ssp) %>% # Get the files for the ssp we are going for
       str_subset(., "ssp119", negate = TRUE) %>% 
       str_subset(., "ssp534-over", negate = TRUE) # Don't want these files (overshoot or 119)
+    oisst_files <- dir(vocc_term_fol, full.names = TRUE, pattern = "OISST")
     
       do_ssps <- function(f, term) { 
         
@@ -69,11 +79,17 @@
           str_split_i(., "_", 4)
         ssp <- basename(f) %>% 
           str_split_i(., "_", 3)
-        term <- term
+        if(basename(f) %>% str_detect(., "OISST")){
+          term <- "historical"
+        } else {
+          term <- term
+        }
         
         # Populate the range of years (corresponding to the relevant term) to subset the full timeseries by 
         if(term == "all") {
           range <- all_range # Full time series
+        } else if (term == "historical") {
+          range <- recent_range
         } else {
           range <- get(paste0(term, "_range")) # Series of years in the term
         }
@@ -88,19 +104,28 @@
         return(slope)
       }
     
-    out <- map(term_list[2:5], function(term) {
-      message("Processing term: ", term)
-      map(files, ~do_ssps(.x, term))
-    }) %>% 
-      flatten() %>%  # Flatten the nested list (terms x files) into a single list (Claude's idea)
-      rast() # Stack it
-    saveRDS(out, file = paste0(acc_fol, "acceleration_yearly_", ssp, "_aus.RDS")) # Save each SSP file
-      # Each file has 52 layers: 1 per ESM, SSP, term combo
+      # SSP layers
+      ssp_out <- map(term_list[2:5], function(term) {
+        message("Processing term: ", term)
+        map(files, ~do_ssps(.x, term))
+      }) %>%
+        flatten() %>% 
+        rast()
+      saveRDS(ssp_out, file = paste0(acc_fol, "acceleration_yearly_", ssp, "_aus.RDS"))
+      # Each file has 53 layers: 1 for the historical OISST layer, and 1 per ESM, SSP, term combo (x52)
+
+      # OISST (historical)
+      oisst_out <- do_ssps(oisst_files, "historical") # Not super clean code, this will be re-run 4 times, but ehhh
+          # %>% rast() 
+      saveRDS(oisst_out, file = paste0(acc_fol, "acceleration_yearly_historical_aus.RDS"))
+      
   }
   
   tic()
   walk(ssp_list, get_fastness)
-  toc()
+  toc() # 25 seconds on Alice's machine
   
-
-    
+  
+  
+  
+  

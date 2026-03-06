@@ -36,60 +36,90 @@
   files <- dir(acc_fol, full.names = TRUE)
   files
   
-  
+  f <- files[1]
   
   
 # Get median acceleration (slope) per 1° latitude ------------------------------
-  
-  a <- readRDS(files[1])
-  a
-  r <- a
-  
-  slope_lat <- function(r) {
+
+  files <- dir(acc_fol, full.names = TRUE)
+
+  slope_lat <- function(f) {
     
-  # Get lat for each cell
-  lat_df <- crds(r, df = TRUE, na.rm = FALSE) %>% # Keep NAs so same number of cols
-    as_tibble() %>% # don't want a df
-    mutate(lat_band = ceiling(y)) # Round up to 1° band (cus we're in negatives)
-  
-  # Get values for all layers, pivot and summarise
-  vals <- values(r, dataframe = TRUE) %>% 
-    as_tibble() %>% 
-    bind_cols(lat_df) %>% 
-    pivot_longer(cols = -c(x, y, lat_band), 
-                 names_to = "layer", 
-                 values_to = "slope") %>% 
-    group_by(lat_band, layer) %>% 
-    summarise(median_slope = median(slope, na.rm = TRUE), 
-              .groups = "drop") %>% 
-    mutate(ssp  = str_split_i(layer, "_", 2),
-           esm  = str_split_i(layer, "_", 3),
-           term = str_split_i(layer, "_", 4)) %>% 
-    dplyr::select(lat = lat_band, median_slope, ssp, term, esm)
-  
+    r <- readRDS(f)
+    
+    # Get lat for each cell
+    lat_df <- crds(r, df = TRUE, na.rm = FALSE) %>% # Keep NAs so same number of cols
+      as_tibble() %>% # don't want a df
+      mutate(lat_band = ceiling(y)) # Round up to 1° band (cus we're in negatives)
+    
+    # Get values for all layers, pivot and summarise
+    vals <- values(r, dataframe = TRUE) %>% 
+      as_tibble() %>% 
+      bind_cols(lat_df) %>% 
+      pivot_longer(cols = -c(x, y, lat_band), 
+                   names_to = "layer", 
+                   values_to = "slope") %>% 
+      group_by(lat_band, layer) %>% 
+      summarise(median_slope = median(slope, na.rm = TRUE), 
+                # median_slope = median(slope[is.finite(slope)], na.rm = TRUE),
+                .groups = "drop") %>% 
+      mutate(ssp  = str_split_i(layer, "_", 2),
+             esm  = str_split_i(layer, "_", 3),
+             term = str_split_i(layer, "_", 4)) %>% 
+      dplyr::select(lat = lat_band, median_slope, ssp, term, esm)
+    
+    return(vals)
   }
   
-  out <- slope_lat(a)
-  # Gives this:
-  
-  # # A tibble: 2,340 × 5
-  # lat median_slope ssp    term         esm          
-  # <dbl>        <dbl> <chr>  <chr>        <chr>        
-  #   1   -49      -0.194  ssp126 intermediate ACCESS-CM2   
-  # 2   -49       0.0334 ssp126 long         ACCESS-CM2   
-  # 3   -49       0.0367 ssp126 mid          ACCESS-CM2   
-  # 4   -49       0.0351 ssp126 near         ACCESS-CM2   
-  # 5   -49      -0.287  ssp126 intermediate ACCESS-ESM1-5
-  # 6   -49       0.217  ssp126 long         ACCESS-ESM1-5
-  # 7   -49       0.121  ssp126 mid          ACCESS-ESM1-5
-  # 8   -49       0.0439 ssp126 near         ACCESS-ESM1-5
-  # 9   -49       0.0278 ssp126 intermediate CESM2-WACCM  
-  # 10   -49       0.0406 ssp126 long         CESM2-WACCM  
-  # # ℹ 2,330 more rows
-  # # ℹ Use `print(n = ...)` to see more rows
+  out <- map(files, slope_lat) %>% 
+    bind_rows %>% 
+    mutate(term = if_else(term == "historical", "recent", term)) %>% 
+    { bind_rows( # ChatGPT helped to duplicate the recent term for each SSP
+      filter(., ssp != "OISST"),
+      expand_grid(ssp = c("ssp126", "ssp245", "ssp370", "ssp585"),
+                  filter(., ssp == "OISST") %>% 
+                    dplyr::select(-ssp))
+      )}
+
   
   
+# Plot -------------------------------------------------------------------------
   
-# 
+  # pal <- c(col_ssp126, col_ssp245, col_ssp370, col_ssp585)
   
+  out_summary <- out %>% 
+    group_by(lat, ssp, term) %>% 
+    summarise(
+      median_slope = median(median_slope, na.rm = TRUE),
+      .groups = "drop"
+    ) %>% 
+    mutate(term = fct_relevel(term, "recent", "near", "mid", "intermediate", "long"))
+  
+  recent_rows <- out_summary %>% 
+    filter(ssp == "historical") %>% 
+    dplyr::select(-ssp) # Otherwise it plots it as historical, not with the ssps
+  
+  # out_summary <- out_summary %>% 
+  #   filter(ssp != "historical") %>% 
+  #   bind_rows(expand_grid(ssp = c("ssp126", "ssp245", "ssp370", "ssp585"), recent_rows))
+  
+  out_summary <- out_summary %>% 
+    mutate(term = fct_relevel(term, "recent", "near", "mid", "intermediate", "long"))
+  
+  ssp_summary <- out_summary %>% 
+    filter(ssp != "historical")
+
+  # Checking the spread for the lims
+  range(ssp_summary$median_slope) # -0.6827282  0.6266832
+
+  ggplot() +
+    geom_tile(data = recent_rows, aes(x = term, y = lat, fill = median_slope)) +
+    geom_tile(data = ssp_summary, aes(x = term, y = lat, fill = median_slope)) +
+    scale_fill_distiller(palette = "RdBu", limits = c(-1, 1), oob = scales::squish) +
+    facet_wrap(~ssp, nrow = 1) +
+    scale_y_continuous(breaks = seq(-50, -5, by = 10)) +
+    labs(fill = "Acceleration (km/decade²)", y = "Latitude", x = NULL) +
+    theme_bw()
+  
+
   
