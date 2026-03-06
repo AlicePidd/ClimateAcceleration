@@ -24,8 +24,9 @@
 # Folders ----------------------------------------------------------------------
 
   acc_fol <- make_folder(source_disk, "3_acceleration_aus", "") # Aus files
-  # acc_global_fol <- make_folder(source_disk, "3_acceleration_global", "") # Global files
   plot_fol <- make_folder(source_disk, "4_acceleration_aus_plot", "") # Aus files
+  
+  # acc_global_fol <- make_folder(source_disk, "3_acceleration_global", "") # Global files
   
   
   
@@ -42,7 +43,37 @@
   
   a <- readRDS(files[1])
   a
-
+r <- a
   
+  slope_lat <- function(r) {
     
+  # Get lat for each cell
+  lat_df <- crds(r, df = TRUE, na.rm = FALSE) %>% # Keep NAs so same number of cols
+    as_tibble() %>% # don't want a df
+    mutate(lat_band = ceiling(y)) # Round up to 1° band (cus we're in negatives)
+  
+  # Get values for all layers, pivot and summarise
+  vals <- values(r, dataframe = TRUE) %>% 
+    as_tibble() %>% 
+    bind_cols(lat_df) %>% 
+    pivot_longer(cols = -c(x, y, lat_band), 
+                 names_to = "layer", 
+                 values_to = "slope") %>% 
+    group_by(lat_band, layer) %>% 
+    summarise(median_slope = median(slope, na.rm = TRUE), .groups = "drop") %>% 
+    mutate(
+      ssp  = str_split_i(layer, "_", 2),
+      esm  = str_split_i(layer, "_", 3),
+      term = str_split_i(layer, "_", 4)
+    ) %>% 
+    dplyr::select(lat = lat_band, median_slope, ssp, term, esm)
+  
+  }
+  
+  out <- slope_lat(a)
+  
+  
+  
+  
+  
   
