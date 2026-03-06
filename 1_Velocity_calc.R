@@ -137,7 +137,7 @@
 
   # By terms
   tic()
-  walk(term_list[2:5], function(term) {
+  walk(term_list[2:5], function(term) { # No recent-past yet
     message("Processing: ", term, "-term")
     walk(files, ~get_velocity(.x, years, term))
   })
