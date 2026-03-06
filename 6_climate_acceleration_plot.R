@@ -43,7 +43,7 @@
   
   a <- readRDS(files[1])
   a
-r <- a
+  r <- a
   
   slope_lat <- function(r) {
     
@@ -60,20 +60,36 @@ r <- a
                  names_to = "layer", 
                  values_to = "slope") %>% 
     group_by(lat_band, layer) %>% 
-    summarise(median_slope = median(slope, na.rm = TRUE), .groups = "drop") %>% 
-    mutate(
-      ssp  = str_split_i(layer, "_", 2),
-      esm  = str_split_i(layer, "_", 3),
-      term = str_split_i(layer, "_", 4)
-    ) %>% 
+    summarise(median_slope = median(slope, na.rm = TRUE), 
+              .groups = "drop") %>% 
+    mutate(ssp  = str_split_i(layer, "_", 2),
+           esm  = str_split_i(layer, "_", 3),
+           term = str_split_i(layer, "_", 4)) %>% 
     dplyr::select(lat = lat_band, median_slope, ssp, term, esm)
   
   }
   
   out <- slope_lat(a)
+  # Gives this:
+  
+  # # A tibble: 2,340 × 5
+  # lat median_slope ssp    term         esm          
+  # <dbl>        <dbl> <chr>  <chr>        <chr>        
+  #   1   -49      -0.194  ssp126 intermediate ACCESS-CM2   
+  # 2   -49       0.0334 ssp126 long         ACCESS-CM2   
+  # 3   -49       0.0367 ssp126 mid          ACCESS-CM2   
+  # 4   -49       0.0351 ssp126 near         ACCESS-CM2   
+  # 5   -49      -0.287  ssp126 intermediate ACCESS-ESM1-5
+  # 6   -49       0.217  ssp126 long         ACCESS-ESM1-5
+  # 7   -49       0.121  ssp126 mid          ACCESS-ESM1-5
+  # 8   -49       0.0439 ssp126 near         ACCESS-ESM1-5
+  # 9   -49       0.0278 ssp126 intermediate CESM2-WACCM  
+  # 10   -49       0.0406 ssp126 long         CESM2-WACCM  
+  # # ℹ 2,330 more rows
+  # # ℹ Use `print(n = ...)` to see more rows
   
   
   
-  
+# 
   
   
