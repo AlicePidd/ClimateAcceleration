@@ -24,7 +24,7 @@
 # Folders ----------------------------------------------------------------------
 
   sst_fol <- make_folder(source_disk, "1_CMIP_regridded_OISST_DBC_sst_annual_Aus", "") # From Dave
-  vocc_fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
+  fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "")
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "")
   
@@ -63,7 +63,7 @@
   
 # Source the velocity functions ------------------------------------------------
   
-  dir(vocc_fns_fol, full.names = TRUE) %>% 
+  dir(fns_fol, full.names = TRUE) %>% 
     map(source)
 
   
