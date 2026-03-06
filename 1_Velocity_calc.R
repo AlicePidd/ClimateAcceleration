@@ -73,7 +73,7 @@
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
   files <- dir(sst_fol, full.names = TRUE)
-  term = "all"
+  # term = "all"
   # f <- files[67]
   
   get_velocity <- function(f, yrs, term) {
@@ -114,11 +114,11 @@
     result <- map(indexing, compute) %>% 
       rast()
     saveRDS(result, 
-            if(term == "recent" || term == "near" || term == "mid" || term == "intermediate" || term == "long") {
-              file = paste0(vocc_term_fol, "vocc_yearly_", ssp, "_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
-            } else if(term == "all") {
-              file = paste0(vocc_fol, "vocc_yearly_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS")
-              })
+            if(term == "all") {
+              paste0(vocc_fol, "vocc_yearly_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS")
+            } else {
+              paste0(vocc_term_fol, "vocc_yearly_", ssp, "_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
+            })
   }
   
   # Full projected time series 2015-2100
