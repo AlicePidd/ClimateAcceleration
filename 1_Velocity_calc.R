@@ -33,7 +33,7 @@
 # Get files --------------------------------------------------------------------
   
   files <- dir(sst_fol, full.names = TRUE)
-  # f <- files[67] # Just pick a file
+  f <- files[67] # Just pick a file
   
   
   
@@ -73,7 +73,7 @@
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
   files <- dir(sst_fol, full.names = TRUE)
-  # term = "all"
+  term = "mid"
   # f <- files[67]
   
   get_velocity <- function(f, yrs, term) {
@@ -96,7 +96,7 @@
     
     spt_raster <- rast(f) %>% 
       crop(., e1) # Crop
-    spt_raster <- mask(spt_raster, raus) # Mask
+    spt_raster <- mask(spt_raster, mask_land) # Mask
     names(spt_raster) <- time(spt_raster) %>% 
       year()
     

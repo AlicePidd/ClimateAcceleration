@@ -40,3 +40,25 @@
   # base_grid <- readRDS(paste0(con_shps_fol, "/base_polygonsf_grid_ID.RDS"))
   # mpa_ranges <- readRDS(paste0(helper_fol, "/MPA_ID_by_network.RDS"))
   # network_mpas <- readRDS(paste0(helper_fol, "/MPA_ID_by_network.RDS"))
+  
+  
+  
+# Create landsea mask using the OISST file (it's better) -----------------------
+  
+  # # Make it
+  # mask <- rast("/Volumes/AliceShield/acceleration_data/1_OISST_annual_Aus/tos_Oyear_OISST_Aus_19820101-20251231.nc")[[1]]
+  # plot(mask)
+  # mask <- ifel(is.na(mask), NA, 1) %>% 
+  #   crop(., e1)
+  # mask
+  # plot(mask)
+  # saveRDS(mask, file = paste0(shps_fol, "/mask.RDS"))
+  
+  # Load it
+  mask_land <- readRDS(paste0(shps_fol, "/mask.RDS"))
+
+  
+  
+  
+  
+  

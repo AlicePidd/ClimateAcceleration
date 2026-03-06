@@ -25,13 +25,24 @@
 
   acc_fol <- make_folder(source_disk, "3_acceleration_aus", "") # Aus files
   # acc_global_fol <- make_folder(source_disk, "3_acceleration_global", "") # Global files
-  plot_fol <- make_folder(source_disk, "5_acceleration_aus_plot", "") # Aus files
+  plot_fol <- make_folder(source_disk, "4_acceleration_aus_plot", "") # Aus files
   
   
   
   
 # Get files --------------------------------------------------------------------
   
-  files <- dir(vocc_fol, full.names = TRUE) %>% 
-    str_subset(., "ssp119", negate = TRUE) %>% 
-    str_subset(., "ssp534-over", negate = TRUE)
+  files <- dir(acc_fol, full.names = TRUE)
+  files
+  
+  
+  
+  
+# Get median acceleration (slope) per 1° latitude ------------------------------
+  
+  a <- readRDS(files[1])
+  a
+
+  
+    
+  
