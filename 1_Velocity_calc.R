@@ -44,13 +44,15 @@
     seq(yr-10, yr+10, by = 1)
   }
   
-  all_range <- 2021:2090 # Whole timeseries
-  near_range <- 2021:2040 
+  all_range <- 2021:2090 # Projection timeseries
+  recent_range <- 1995:2014 # OISST (reality) term
+  near_range <- 2021:2040 # Projection terms
   mid_range <- 2041:2060
   int_range <- 2061:2080
   long_range <- 2080:2090
   
   all_years <- map(all_range, make_rolling_seq)
+  recent_years <- map(recent_range, make_rolling_seq)
   near_years <- map(near_range, make_rolling_seq)
   mid_years <- map(mid_range, make_rolling_seq)
   int_years <- map(int_range, make_rolling_seq)
@@ -71,9 +73,8 @@
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
   files <- dir(sst_fol, full.names = TRUE)
-  # indexing <- 1:length(years) # So it knows what year to name each layer
-  term = "mid"
-  f <- files[67]
+  # term = "mid"
+  # f <- files[67]
   
   get_velocity <- function(f, yrs, term) {
     
@@ -129,7 +130,7 @@
               })
   }
   
-  # Full projected time series
+  # Full projected time series 2015-2100
   tic()
   walk(files, ~get_velocity(.x, years, "all")) 
   toc() # 31 min per file on Alice's machine

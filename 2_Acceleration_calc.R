@@ -55,24 +55,62 @@
   yrs <- as.character(near_range)
 
   
+  ssp <- "ssp126"
+  term <- "near"
 
+    
+    
 # Acceleration function --------------------------------------------------------
   
-  get_fast <- function(f, term){
+  get_fast <- function(ssp) {
     
-    r <- readRDS(f) %>% 
-      terra::subset(., str_detect(names(.), paste(near_range, collapse = "|")))
-
-    slope <- tempTrend(r, 3)[[1]]  
+    files <- dir(vocc_fol, full.names = TRUE, pattern = ssp) %>% # Get the files for the ssp we are going for
+      str_subset(., "ssp119", negate = TRUE) %>% 
+      str_subset(., "ssp534-over", negate = TRUE) # Don't want these files (overshoot or 119)
     
+      do_ssps <- function(f, term) { 
+        
+        esm <- basename(f) %>% 
+          str_split_i(., "_", 4)
+        ssp <- basename(f) %>% 
+          str_split_i(., "_", 3)
+        term <- term
+        
+        # Populate the range of years (corresponding to the relevant term) to subset the full timeseries by 
+        if(term == "near") { 
+          range <- near_range
+        } else if(term == "mid") {
+          range <- mid_range
+        } else if(term == "intermediate") {
+          range <- int_range
+        } else if(term == "long") {
+          range <- long_range
+        } else if(term == "all") {
+          range <- long_range
+        }
+        
+        # Subset 
+        r <- readRDS(f) %>% 
+          terra::subset(., str_detect(names(.), paste(range, collapse = "|"))) # Get only the relevant layers per the term years
+        
+        # Calculate the slope i.e., acceleration of velocity for each ssp, term, and esm
+        slope <- tempTrend(r, 3)[[1]] 
+        names(slope) <- paste0("slope_", ssp, "_", esm, "_", term) # Name the layers accordingly
+        return(slope)
+      }
+    
+    out <- map(term_list[2:5], function(term) {
+      message("Processing term: ", term)
+      map(files, ~do_ssps(.x, term))
+    }) %>% 
+      flatten() %>%  # Flatten the nested list (terms x files) into a single list (Claude's idea)
+      rast()
+    saveRDS(out, file = paste0(acc_fol, "acceleration_yearly_", ssp, "_aus.RDS"))
   }
   
+  tic()
+  walk(ssp_list, get_fast)
+  toc()
+  
 
-  s <- ifel(slope > 10, 10, slope)
-  s <- ifel(s < -10, -10, s)
-  plot(s[[1]])
     
-
-    
-    
-# 
