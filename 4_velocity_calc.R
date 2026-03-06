@@ -24,16 +24,10 @@
 # Folders ----------------------------------------------------------------------
 
   sst_fol <- make_folder(source_disk, "1_CMIP_regridded_OISST_DBC_sst_annual_Aus", "") # From Dave
+  oisst_fol <- make_folder(source_disk, "1_OISST_annual_Aus", "") # From Dave
   fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "")
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "")
-  
-  
-  
-# Get files --------------------------------------------------------------------
-  
-  files <- dir(sst_fol, full.names = TRUE)
-  f <- files[67] # Just pick a file
   
   
   
@@ -73,8 +67,12 @@
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
   files <- dir(sst_fol, full.names = TRUE)
-  # term = "mid"
-  # f <- files[67]
+  oisst_files <- dir(oisst_fol, full.names = TRUE)
+  
+  term = "recent"
+  f <- files[67]
+  f <- oisst_files
+  
   
   get_velocity <- function(f, yrs, term) {
     
@@ -107,7 +105,12 @@
         out <- gVoCC(tmp_trend, spt_grad) %>% 
           terra::subset(1)
         nm_yr <- yrs[[i]][11] # The year we're calculating for
-        names(out) <- paste0(nm_yr, "_", ssp, "_", esm)
+        
+        if(term == "recent") {
+          names(out) <- paste0(nm_yr, "_historical_", esm)
+        } else {
+          names(out) <- paste0(nm_yr, "_", ssp, "_", esm)
+        }
         return(out)
       }
     
@@ -116,6 +119,8 @@
     saveRDS(result, 
             if(term == "all") {
               paste0(vocc_fol, "vocc_yearly_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS")
+            } else if (term == "recent") {
+              paste0(vocc_term_fol, "vocc_yearly_historical_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
             } else {
               paste0(vocc_term_fol, "vocc_yearly_", ssp, "_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
             })
@@ -124,7 +129,7 @@
   # Full projected time series 2015-2100
   tic()
   walk(files, ~get_velocity(.x, years, "all")) 
-  toc() # 31 min per file on Alice's machine
+  toc() # 31 min on Alice's machine
 
   # By terms
   tic()
@@ -133,9 +138,11 @@
     walk(files, ~get_velocity(.x, years, term))
   })
   toc()
+
+  # For the recent term (using OISST data instead of CMIP)
+  tic()
+  walk(oisst_files, ~get_velocity(.x, years, "recent")) 
+  toc() # 31 min per file on Alice's machine
   
-    # tic()
-    # walk(files, ~get_velocity(.x, years, "near")) 
-    # toc() # 9 min per term on Alice's machine
   
   
