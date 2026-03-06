@@ -31,13 +31,6 @@
   
   
   
-  
-# Get files --------------------------------------------------------------------
-  
-  files <- dir(vocc_fol, full.names = TRUE) %>% 
-    str_subset(., "ssp119", negate = TRUE) %>% 
-    str_subset(., "ssp534-over", negate = TRUE)
-  f <- files[1] # Just pick a file  
 
   
   
@@ -47,16 +40,21 @@
   term_list[2:5]
   
   all_range <- 2021:2090 # Whole timeseries
-  near_range <- 2021:2040 
+  recent_range <- 1995:2014 # OISST (reality) term
+  near_range <- 2021:2040 # Projection terms
   mid_range <- 2041:2060
   int_range <- 2061:2080
   long_range <- 2080:2090
   
-  yrs <- as.character(near_range)
 
+  files <- dir(vocc_fol, full.names = TRUE) %>%
+    str_subset(., "ssp119", negate = TRUE) %>%
+    str_subset(., "ssp534-over", negate = TRUE)
+  f <- files[1] # Just pick a file
   
+  yrs <- as.character(mid_range)
   ssp <- "ssp126"
-  term <- "near"
+  term <- "mid"
 
     
     
@@ -77,16 +75,10 @@
         term <- term
         
         # Populate the range of years (corresponding to the relevant term) to subset the full timeseries by 
-        if(term == "near") { 
-          range <- near_range
-        } else if(term == "mid") {
-          range <- mid_range
-        } else if(term == "intermediate") {
-          range <- int_range
-        } else if(term == "long") {
-          range <- long_range
-        } else if(term == "all") {
-          range <- long_range
+        if(term == "all") {
+          range <- all_range # Full time series
+        } else {
+          range <- get(paste0(term, "_range")) # Series of years in the term
         }
         
         # Subset 
