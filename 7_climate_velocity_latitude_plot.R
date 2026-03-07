@@ -1,8 +1,8 @@
-# Plotting climate acceleration by 1° latitude
+# Plotting climate velocity by 1° latitude
   # Written by Alice P
-    # 6 March 2026
+    # 7 March 2026
 
-# Acceleration at each 1° of latitude - median of each band, per SSP and term
+# Climate velocity at each 1° of latitude - median of each band, per SSP and term
 
 
 # Helpers ----------------------------------------------------------------------
@@ -12,12 +12,15 @@
   source("Background_data.R")
 
 
+  
 
 # Folders ----------------------------------------------------------------------
 
-  acc_fol <- make_folder(source_disk, "3_acceleration_aus", "") # Aus files
-  plot_fol <- make_folder(source_disk, "4_acceleration_aus_plot", "") # Aus files
+  vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "")
+  vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "")
   
+
+
 
   
 # Get median acceleration (slope) per 1° latitude ------------------------------
@@ -127,5 +130,3 @@
                      nm = nm)
       })
     })
-  
-  
