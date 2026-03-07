@@ -5,6 +5,7 @@
 # Climate velocity at each 1° of latitude - median of each band, per SSP and term
 
 
+
 # Helpers ----------------------------------------------------------------------
 
   source("Helpers.R")
@@ -13,23 +14,27 @@
 
 
   
-
 # Folders ----------------------------------------------------------------------
 
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "")
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "")
-  
-
+  plot_fol <- make_folder(source_disk, "4_velocity_aus_plot", "")
 
 
   
 # Get median acceleration (slope) per 1° latitude ------------------------------
 
-  files <- dir(acc_fol, full.names = TRUE)
+  files <- dir(vocc_term_fol, full.names = TRUE) %>% 
+    str_subset(., "534-over", negate = TRUE) %>% 
+    str_subset(., "ssp119", negate = TRUE)
+  files
+
+  f <- files[2]
 
   slope_lat <- function(f) {
     
     r <- readRDS(f)
+    term <- basename(f) %>% str_split_i(., "_", 5)
     
     # Get lat for each cell
     lat_df <- crds(r, df = TRUE, na.rm = FALSE) %>% # Keep NAs so same number of cols
@@ -44,13 +49,12 @@
                    names_to = "layer", 
                    values_to = "slope") %>% 
       group_by(lat_band, layer) %>% 
-      summarise(median_slope = median(slope, na.rm = TRUE), 
-                # median_slope = median(slope[is.finite(slope)], na.rm = TRUE),
+      summarise(median_vocc = median(slope, na.rm = TRUE), # Get median slope across all ESMs at each lat
                 .groups = "drop") %>% 
       mutate(ssp  = str_split_i(layer, "_", 2),
              esm  = str_split_i(layer, "_", 3),
-             term = str_split_i(layer, "_", 4)) %>% 
-      dplyr::select(lat = lat_band, median_slope, ssp, term, esm)
+             term = term) %>% 
+      dplyr::select(lat = lat_band, median_vocc, ssp, term, esm)
     
     return(vals)
   }
@@ -72,8 +76,8 @@
   
   out_summary <- out %>% 
     group_by(lat, ssp, term) %>% 
-    summarise(median_slope_yr = median(median_slope, na.rm = TRUE),
-              median_slope_dec = median(median_slope, na.rm = TRUE) * 10,
+    summarise(median_vocc_yr = median(median_vocc, na.rm = TRUE),
+              median_vocc_dec = median(median_vocc, na.rm = TRUE) * 10,
               .groups = "drop") %>% 
     mutate(term = fct_relevel(term, "recent", "near", "mid", "intermediate", "long"))
   
@@ -88,19 +92,22 @@
     filter(ssp != "historical")
 
   # Checking the spread for the lims
-  range(ssp_summary$median_slope_yr) # -0.6827282  0.6266832
-  range(ssp_summary$median_slope_dec) # -6.827282  6.266832
+  range(ssp_summary$median_vocc_yr) # -1.659232 40.505437
+  range(ssp_summary$median_vocc_dec) # -16.59232 405.05437
   
   
   
 
 # Plot -------------------------------------------------------------------------
   
-  heat_pal <- c("#244e57", "#378890", "#70c0ba", "#CDF1EF", "#FFFDF4", "#f4c659", "#d9792e", "#af2213", "#871c0f")
-  RdBu_pal <- paletteer::paletteer_c("scico::vik", 11)
+  # heat_pal <- c("#244e57", "#378890", "#70c0ba", "#CDF1EF", "#FFFDF4", "#f4c659", "#d9792e", "#af2213", "#871c0f")
+  pal <- c("#FFFDF4", "#f4c659", "#d9792e", "#af2213", "#871c0f")
+  # heat_pal <- c("#241d1d", "#5b2124", "#8d3431", "#bf552e", "#e8a800")
+  # heat_pal <- c("#0f1926", "#025940", "#02734b", "#068c33", "#01a62c")
+  # RdBu_pal <- paletteer::paletteer_c("scico::vik", 11)
   # RdBu_pal <- khroma::color("BuRd")(11)
   
-  plot_lat_accel <- function(m, pal, lim, lab, nm) {
+  plot_lat_velocity <- function(m, lim, lab) {
     lat_plot <- ggplot() +
       geom_tile(data = recent_rows, aes(x = term, y = lat, fill = .data[[m]])) + 
       geom_tile(data = ssp_summary, aes(x = term, y = lat, fill = .data[[m]])) + 
@@ -108,25 +115,19 @@
                            limits = lim) +
       facet_wrap(~ssp, nrow = 1) +
       scale_y_continuous(breaks = seq(-50, 0, by = 10)) +
-      labs(fill = paste0("Acceleration\n(km/", lab, "²)"), y = "Latitude", x = NULL) + 
+      labs(fill = paste0("Climate velocity\n(km/", lab, ")"), y = "Latitude", x = NULL) + 
       theme_few(base_size = 10)
     
-    ggsave(paste0(plot_fol, "median_acceleration_by_1deglatitude_km", lab, "2_", nm,".pdf"),
+    ggsave(paste0(plot_fol, "median_climate velocity_by_1deglatitude_km", lab, ".pdf"),
            lat_plot, width = 14, height = 8, dpi = 300)
   }
   
-  params <- list(list(m = "median_slope_dec", lim = c(-10, 10), lab = "decade"),
-                 list(m = "median_slope_yr",  lim = c(-1, 1),   lab = "year"))
+  params <- list(list(m = "median_vocc_dec", lim = c(-20, 420), lab = "decade"),
+                 list(m = "median_vocc_yr",  lim = c(-2, 42),   lab = "year"))
   
-  pals <- list(heatpal = heat_pal, 
-               RdBupal = RdBu_pal)
+  # pals <- list(heatpal = heat_pal, 
+  #              RdBupal = RdBu_pal)
   
-  walk(names(pals), function(nm) {
-    walk(params, function(p) {
-      plot_lat_accel(m = p$m, 
-                     pal = pals[[nm]], 
-                     lim = p$lim, 
-                     lab = p$lab, 
-                     nm = nm)
-      })
-    })
+  walk(params, function(p) {
+    plot_lat_velocity(m = p$m, lim = p$lim, lab = p$lab)
+  })
