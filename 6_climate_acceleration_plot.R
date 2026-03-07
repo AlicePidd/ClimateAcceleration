@@ -83,26 +83,19 @@
 
   
   
-# Plot -------------------------------------------------------------------------
-  
-  # pal <- c(col_ssp126, col_ssp245, col_ssp370, col_ssp585)
+# Get it in a tibble format for plotting ---------------------------------------
   
   out_summary <- out %>% 
     group_by(lat, ssp, term) %>% 
-    summarise(
-      median_slope = median(median_slope, na.rm = TRUE),
-      .groups = "drop"
-    ) %>% 
+    summarise(median_slope_yr = median(median_slope, na.rm = TRUE),
+              median_slope_dec = median(median_slope, na.rm = TRUE) * 10,
+              .groups = "drop") %>% 
     mutate(term = fct_relevel(term, "recent", "near", "mid", "intermediate", "long"))
   
   recent_rows <- out_summary %>% 
     filter(ssp == "historical") %>% 
     dplyr::select(-ssp) # Otherwise it plots it as historical, not with the ssps
-  
-  # out_summary <- out_summary %>% 
-  #   filter(ssp != "historical") %>% 
-  #   bind_rows(expand_grid(ssp = c("ssp126", "ssp245", "ssp370", "ssp585"), recent_rows))
-  
+
   out_summary <- out_summary %>% 
     mutate(term = fct_relevel(term, "recent", "near", "mid", "intermediate", "long"))
   
@@ -110,16 +103,49 @@
     filter(ssp != "historical")
 
   # Checking the spread for the lims
-  range(ssp_summary$median_slope) # -0.6827282  0.6266832
-
-  ggplot() +
-    geom_tile(data = recent_rows, aes(x = term, y = lat, fill = median_slope)) +
-    geom_tile(data = ssp_summary, aes(x = term, y = lat, fill = median_slope)) +
-    scale_fill_distiller(palette = "RdBu", limits = c(-1, 1), oob = scales::squish) +
-    facet_wrap(~ssp, nrow = 1) +
-    scale_y_continuous(breaks = seq(-50, -5, by = 10)) +
-    labs(fill = "Acceleration (km/decade²)", y = "Latitude", x = NULL) +
-    theme_bw()
+  range(ssp_summary$median_slope_yr) # -0.6827282  0.6266832
+  range(ssp_summary$median_slope_dec) # -6.827282  6.266832
+  
+  
   
 
+# Plot -------------------------------------------------------------------------
+  
+  heat_pal <- c("#244e57", "#378890", "#70c0ba", "#CDF1EF", "#FFFDF4", "#f4c659", "#d9792e", "#af2213", "#871c0f")
+  RdBu_pal <- paletteer::paletteer_c("scico::vik", 11)
+  # RdBu_pal <- khroma::color("BuRd")(11)
+  
+  plot_lat_accel <- function(m, pal, lim, lab, nm) {
+    lat_plot <- ggplot() +
+      geom_tile(data = recent_rows, aes(x = term, y = lat, fill = .data[[m]])) + # For km/decade^2
+      geom_tile(data = ssp_summary, aes(x = term, y = lat, fill = .data[[m]])) + # For km/decade^2
+      scale_fill_gradientn(colours = pal, 
+                           # colours = khroma::color("BuRd")(11), # Optional palette that's similar to RdBu
+                           limits = lim) +
+      # scale_fill_paletteer_c("scico::vik", limits = c(-1, 1), oob = scales::squish) +
+      facet_wrap(~ssp, nrow = 1) +
+      scale_y_continuous(breaks = seq(-50, 0, by = 10)) +
+      labs(fill = paste0("Acceleration\n(km/", lab, "²)"), y = "Latitude", x = NULL) + # For km/decade^2
+      theme_few(base_size = 10)
+    
+    ggsave(paste0(plot_fol, "median_acceleration_by_1deglatitude_km", lab, "2_", nm,".pdf"),
+           lat_plot, width = 14, height = 8, dpi = 300)
+  }
+  
+  params <- list(list(m = "median_slope_dec", lim = c(-10, 10), lab = "decade"),
+                 list(m = "median_slope_yr",  lim = c(-1, 1),   lab = "year"))
+  
+  pals <- list(heatpal = heat_pal, 
+               RdBupal = RdBu_pal)
+  
+  walk(names(pals), function(nm) {
+    walk(params, function(p) {
+      plot_lat_accel(m = p$m, 
+                     pal = pals[[nm]], 
+                     lim = p$lim, 
+                     lab = p$lab, 
+                     nm = nm)
+      })
+    })
+  
   
