@@ -117,15 +117,13 @@
   
   plot_lat_accel <- function(m, pal, lim, lab, nm) {
     lat_plot <- ggplot() +
-      geom_tile(data = recent_rows, aes(x = term, y = lat, fill = .data[[m]])) + # For km/decade^2
-      geom_tile(data = ssp_summary, aes(x = term, y = lat, fill = .data[[m]])) + # For km/decade^2
+      geom_tile(data = recent_rows, aes(x = term, y = lat, fill = .data[[m]])) + 
+      geom_tile(data = ssp_summary, aes(x = term, y = lat, fill = .data[[m]])) + 
       scale_fill_gradientn(colours = pal, 
-                           # colours = khroma::color("BuRd")(11), # Optional palette that's similar to RdBu
                            limits = lim) +
-      # scale_fill_paletteer_c("scico::vik", limits = c(-1, 1), oob = scales::squish) +
       facet_wrap(~ssp, nrow = 1) +
       scale_y_continuous(breaks = seq(-50, 0, by = 10)) +
-      labs(fill = paste0("Acceleration\n(km/", lab, "²)"), y = "Latitude", x = NULL) + # For km/decade^2
+      labs(fill = paste0("Acceleration\n(km/", lab, "²)"), y = "Latitude", x = NULL) + 
       theme_few(base_size = 10)
     
     ggsave(paste0(plot_fol, "median_acceleration_by_1deglatitude_km", lab, "2_", nm,".pdf"),
