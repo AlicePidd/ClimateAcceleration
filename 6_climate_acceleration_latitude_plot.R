@@ -10,13 +10,13 @@
   source("Helpers.R")
   source_disk <- "/Volumes/AliceShield/acceleration_data"
   source("Background_data.R")
-
-
-
+  
+  
+  
 # Folders ----------------------------------------------------------------------
 
   acc_fol <- make_folder(source_disk, "3_acceleration_aus", "") # Aus files
-  plot_fol <- make_folder(source_disk, "4_acceleration_aus_plot", "") # Aus files
+  plot_fol <- make_folder(source_disk, "4_acceleration_aus_plot", "latitude") # Aus files
   
 
   

@@ -100,10 +100,10 @@
     
       compute <- function(i) {
         r <- terra::subset(spt_raster, yrs[[i]] %>% unlist() %>% as.character()) # Get only the data for the years we need
-        spt_grad <- spatGrad(r)
-        tmp_trend <- tempTrend(r, 3)
-        out <- gVoCC(tmp_trend, spt_grad) %>% 
-          terra::subset(1)
+        spt_grad <- spatGrad(r) # How quickly the SST changes across space (°C/km) i.e., how steep is the temp landscape at each grid cell
+        tmp_trend <- tempTrend(r, 3) # How quickly SST is changing through time (°C/year) i.e., how fast is temp changing over time at each grid cell
+        out <- gVoCC(tmp_trend, spt_grad) %>% # velocity = (°C/year) / (°C/km) = km/year
+          terra::subset(1) # Only need VoCC not the other layers
         nm_yr <- yrs[[i]][11] # The year we're calculating for
         
         if(term == "recent") {
