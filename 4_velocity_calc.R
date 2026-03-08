@@ -42,14 +42,14 @@
   recent_range <- 1995:2014 # OISST (reality) term
   near_range <- 2021:2040 # Projection terms
   mid_range <- 2041:2060
-  int_range <- 2061:2080
+  intermediate_range <- 2061:2080
   long_range <- 2080:2090
   
   all_years <- map(all_range, make_rolling_seq)
   recent_years <- map(recent_range, make_rolling_seq)
   near_years <- map(near_range, make_rolling_seq)
   mid_years <- map(mid_range, make_rolling_seq)
-  int_years <- map(int_range, make_rolling_seq)
+  intermediate_years <- map(int_range, make_rolling_seq)
   long_years <- map(long_range, make_rolling_seq)
   
 
@@ -69,9 +69,9 @@
   files <- dir(sst_fol, full.names = TRUE)
   oisst_files <- dir(oisst_fol, full.names = TRUE)
   
-  term = "recent"
-  f <- files[67]
-  f <- oisst_files
+  # term = "mid"
+  # f <- files[67]
+  # f <- oisst_files
   
   
   get_velocity <- function(f, yrs, term) {
@@ -129,7 +129,7 @@
   # Full projected time series 2015-2100
   tic()
   walk(files, ~get_velocity(.x, years, "all")) 
-  toc() # 31 min on Alice's machine
+  toc() # 29 min on Alice's machine
 
   # By terms
   tic()
@@ -137,12 +137,12 @@
     message("Processing: ", term, "-term")
     walk(files, ~get_velocity(.x, years, term))
   })
-  toc()
+  toc() # 30 mins on Alice's machine
 
   # For the recent term (using OISST data instead of CMIP)
   tic()
   walk(oisst_files, ~get_velocity(.x, years, "recent")) 
-  toc() # 31 min per file on Alice's machine
+  toc() # 9 sec
   
   
   

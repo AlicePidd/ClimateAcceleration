@@ -23,6 +23,7 @@
 # Get median acceleration (slope) per 1° latitude ------------------------------
 
   files <- dir(acc_fol, full.names = TRUE)
+  files
 
   slope_lat <- function(f) {
     
@@ -85,8 +86,8 @@
     filter(ssp != "historical")
 
   # Checking the spread for the lims
-  range(ssp_summary$median_slope_yr) # -0.6827282  0.6266832
-  range(ssp_summary$median_slope_dec) # -6.827282  6.266832
+  range(ssp_summary$median_slope_yr) # -0.8090447  0.6364845
+  range(ssp_summary$median_slope_dec) # -8.090447  6.364845
   
   
   
@@ -108,7 +109,7 @@
       labs(fill = paste0("Acceleration\n(km/", lab, "²)"), y = "Latitude", x = NULL) + 
       theme_few(base_size = 10)
     
-    ggsave(paste0(plot_fol, "median_acceleration_by_1deglatitude_km", lab, "2_", nm,".pdf"),
+    ggsave(paste0(plot_fol, "/median_acceleration_by_1deglatitude_km", lab, "2_", nm,".pdf"),
            lat_plot, width = 14, height = 8, dpi = 300)
   }
   

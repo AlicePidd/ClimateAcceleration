@@ -29,7 +29,7 @@
     str_subset(., "ssp119", negate = TRUE)
   files
 
-  f <- files[2]
+  # f <- files[2]
 
   slope_lat <- function(f) {
     
@@ -68,7 +68,7 @@
                   filter(., ssp == "OISST") %>% 
                     dplyr::select(-ssp))
       )}
-
+  out
   
   
   
@@ -92,8 +92,8 @@
     filter(ssp != "historical")
 
   # Checking the spread for the lims
-  range(ssp_summary$median_vocc_yr) # -1.659232 40.505437
-  range(ssp_summary$median_vocc_dec) # -16.59232 405.05437
+  range(ssp_summary$median_vocc_yr) # -2.205539 42.721813
+  range(ssp_summary$median_vocc_dec) # -22.05539 427.21813
   
   
   
@@ -118,12 +118,12 @@
       labs(fill = paste0("Climate velocity\n(km/", lab, ")"), y = "Latitude", x = NULL) + 
       theme_few(base_size = 10)
     
-    ggsave(paste0(plot_fol, "median_climate velocity_by_1deglatitude_km", lab, ".pdf"),
+    ggsave(paste0(plot_fol, "/median_climate velocity_by_1deglatitude_km", lab, ".pdf"),
            lat_plot, width = 14, height = 8, dpi = 300)
   }
   
-  params <- list(list(m = "median_vocc_dec", lim = c(-20, 420), lab = "decade"),
-                 list(m = "median_vocc_yr",  lim = c(-2, 42),   lab = "year"))
+  params <- list(list(m = "median_vocc_dec", lim = c(-50, 450), lab = "decade"),
+                 list(m = "median_vocc_yr",  lim = c(-5, 45),   lab = "year"))
   
   # pals <- list(heatpal = heat_pal, 
   #              RdBupal = RdBu_pal)

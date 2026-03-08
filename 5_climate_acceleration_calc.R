@@ -123,7 +123,7 @@
   
   tic()
   walk(ssp_list, get_fastness)
-  toc() # 25 seconds on Alice's machine
+  toc() # 30 seconds on Alice's machine
   
   
   
