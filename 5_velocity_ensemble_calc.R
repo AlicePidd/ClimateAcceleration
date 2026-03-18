@@ -1,9 +1,8 @@
-# Computing median climate velocity from ensemble of all 13 ESMs
+# Computing median climate velocity across ALL 11 ESMs, NOT an ensemble, just the median
   # Written by Alice P
     # 7 March 2026
 
 
-#**UPDATE: Need to do this NOT as an ensemble across ESMs**
 
 # Helpers ----------------------------------------------------------------------
 
@@ -18,12 +17,13 @@
 
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "")
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "")
-  ensemble_fol <- make_folder(source_disk, "3_vocc_ensemble_terms", "")
+  median_fol <- make_folder(source_disk, "3_vocc_median_terms", "")
 
 
+  ssp <- "ssp245"
+  term <- "mid"
   
-  
-# Get the ensemble median climate velocity, per SSP-term combo -----------------
+# Get the median climate velocity across all ESMs together, per SSP-term combo -------------
 
   make_ensembles <- function(ssp, term) {
     message("Processing: ", ssp, " - ", term)
@@ -34,11 +34,14 @@
       str_subset(ssp) %>% 
       str_subset(term)
     
-    ens <- map(combo_files, readRDS) %>%  # Load and stack all ESMs
+    stack <- map(combo_files, readRDS) %>%  # Load and stack all ESMs
       rast()
-    ens_median <- app(ens, median, na.rm = TRUE) # Median across ESMs
+    stack_median <- app(stack, median, na.rm = TRUE) # Median across ESMs
+    stack_min <- app(stack, min, na.rm = TRUE) # Median across ESMs
+    stack_max <- app(stack, max, na.rm = TRUE) # Median across ESMs
     
-    o_nm <- paste0(ensemble_fol, "vocc_yearly_", ssp, "_ensemble_", term, ".RDS")
+    
+    o_nm <- paste0(median_fol, "vocc_median", ssp, "_", term, ".RDS")
     saveRDS(ens_median, o_nm)
   }
   

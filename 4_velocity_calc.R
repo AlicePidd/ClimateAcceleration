@@ -4,13 +4,6 @@
 
 
 
-# Questions:
-  # Acceleration at each 1° of latitude - median of each band, per SSP (no time aspect)
-  # Acceleration within MPAs vs. outside MPAs - yearly median timeseries
-  # Acceleration per SSP, 
-
-
-
 
 # Helpers ----------------------------------------------------------------------
 
@@ -67,10 +60,7 @@
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
   files <- dir(sst_fol, full.names = TRUE) %>% 
-    str_subset(., "ssp119", negate = TRUE) %>% 
-    str_subset(., "534-over", negate = TRUE) %>% 
-    str_subset(., "CESM2-WACCM", negate = TRUE) %>% 
-    str_subset(., "GFDL-ESM4", negate = TRUE)
+    str_subset(., "ssp119|ssp534-over|CESM2-WACCM|GFDL-ESM4", negate = TRUE) # None of these files
   oisst_files <- dir(oisst_fol, full.names = TRUE)
   
   term = "mid"

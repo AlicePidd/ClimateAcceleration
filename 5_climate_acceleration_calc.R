@@ -69,8 +69,7 @@
   get_fastness <- function(ssp) {
     
     files <- dir(vocc_fol, full.names = TRUE, pattern = ssp) %>% # Get the files for the ssp we are going for
-      str_subset(., "ssp119", negate = TRUE) %>% 
-      str_subset(., "ssp534-over", negate = TRUE) # Don't want these files (overshoot or 119)
+      str_subset(., "ssp119|ssp534-over", negate = TRUE) 
     oisst_files <- dir(vocc_term_fol, full.names = TRUE, pattern = "OISST")
     
       do_ssps <- function(f, term) { 
