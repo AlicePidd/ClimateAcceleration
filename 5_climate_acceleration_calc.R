@@ -58,7 +58,7 @@
   #   str_subset(., "ssp534-over", negate = TRUE)
   # f <- files[1] # Just pick a file
   # yrs <- as.character(mid_range)
-  ssp <- "ssp126"
+  ssp <- "ssp245"
   # term <- "mid"
 
   
@@ -106,7 +106,7 @@
     
       # SSP layers
       ssp_out <- map(term_list[2:5], function(term) {
-        message("Processing term: ", term)
+        message("Processing: ", term, "-term")
         map(files, ~do_ssps(.x, term))
       }) %>%
         flatten() %>% 
@@ -127,5 +127,6 @@
   
   
   
+
   
   

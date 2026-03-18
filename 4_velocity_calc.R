@@ -25,7 +25,7 @@
 
   sst_fol <- make_folder(source_disk, "1_CMIP_regridded_OISST_DBC_sst_annual_Aus", "") # From Dave
   oisst_fol <- make_folder(source_disk, "1_OISST_annual_Aus", "") # From Dave
-  fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
+  fn_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "")
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "")
   
@@ -49,7 +49,7 @@
   recent_years <- map(recent_range, make_rolling_seq)
   near_years <- map(near_range, make_rolling_seq)
   mid_years <- map(mid_range, make_rolling_seq)
-  intermediate_years <- map(int_range, make_rolling_seq)
+  intermediate_years <- map(intermediate_range, make_rolling_seq)
   long_years <- map(long_range, make_rolling_seq)
   
 
@@ -57,7 +57,7 @@
   
 # Source the velocity functions ------------------------------------------------
   
-  dir(fns_fol, full.names = TRUE) %>% 
+  dir(fn_fol, full.names = TRUE) %>% 
     map(source)
 
   
@@ -66,12 +66,16 @@
     # Compute grid cell velocity for each period, by calculating the rolling velocity for the surrounding 10 years of each year that is within each period (i.e., to calculate the velocity for the first year in the near-term, 2021, we calculate the velocities each of the 10 years prior and after, so between 2011-2031)
     # Use these rolling velocities for each year in each period to compute the acceleration of each period as the slope of those velocities
 
-  files <- dir(sst_fol, full.names = TRUE)
+  files <- dir(sst_fol, full.names = TRUE) %>% 
+    str_subset(., "ssp119", negate = TRUE) %>% 
+    str_subset(., "534-over", negate = TRUE) %>% 
+    str_subset(., "CESM2-WACCM", negate = TRUE) %>% 
+    str_subset(., "GFDL-ESM4", negate = TRUE)
   oisst_files <- dir(oisst_fol, full.names = TRUE)
   
-  # term = "mid"
-  # f <- files[67]
-  # f <- oisst_files
+  term = "mid"
+  f <- files[67]
+  f <- oisst_files
   
   
   get_velocity <- function(f, yrs, term) {
