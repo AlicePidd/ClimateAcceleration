@@ -26,9 +26,9 @@
   fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "") # Timeseries velocity by esm, ssp
   vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "") # Velocity by term, esm, ssp
-  acc_fol <- make_folder(source_disk, "3_acceleration_aus", "") # Aus files
-  # acc_global_fol <- make_folder(source_disk, "3_acceleration_global", "") # Global files
-
+  accel_fol <- make_folder(source_disk, "4_acceleration_aus", "") # Aus files
+  accel_term_fol <- make_folder(source_disk, "4_acceleration_aus_termsplit", "") # Aus files
+  
   
   
   
@@ -110,14 +110,19 @@
       }) %>%
         flatten() %>% 
         rast()
-      saveRDS(ssp_out, file = paste0(acc_fol, "acceleration_yearly_", ssp, "_aus.RDS"))
+      saveRDS(ssp_out, file = paste0(accel_fol, "acceleration_yearly_", ssp, "_aus.RDS"))
       # Each file has 53 layers: 1 for the historical OISST layer, and 1 per ESM, SSP, term combo (x52)
 
       # OISST (historical)
       oisst_out <- do_ssps(oisst_files, "historical") # Not super clean code, this will be re-run 4 times, but ehhh
-          # %>% rast() 
-      saveRDS(oisst_out, file = paste0(acc_fol, "acceleration_yearly_historical_aus.RDS"))
+      saveRDS(oisst_out, file = paste0(accel_fol, "acceleration_yearly_historical_aus.RDS"))
       
+      # Term layers
+      ssp_term <- map(term_list[2:5], ~{
+        tt <- terra::subset(ssp_out, grep(.x, names(ssp_out), value = TRUE))
+        saveRDS(tt, file = paste0(accel_term_fol, "acceleration_yearly_", ssp, "_", .x, "-term_aus.RDS"))
+      })
+        
   }
   
   tic()
