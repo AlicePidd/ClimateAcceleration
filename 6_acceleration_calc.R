@@ -24,8 +24,8 @@
 # Folders ----------------------------------------------------------------------
 
   fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
-  vocc_fol <- make_folder(source_disk, "2_vocc_rolling_annual", "") # Timeseries velocity by esm, ssp
-  vocc_term_fol <- make_folder(source_disk, "2_vocc_rolling_annual_termsplit", "") # Velocity by term, esm, ssp
+  vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "") # Timeseries velocity by esm, ssp
+  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_termsplit", "") # Velocity by term, esm, ssp
   accel_fol <- make_folder(source_disk, "4_acceleration_aus", "") # Aus files
   accel_term_fol <- make_folder(source_disk, "4_acceleration_aus_termsplit", "") # Aus files
   
