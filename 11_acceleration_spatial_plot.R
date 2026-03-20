@@ -95,7 +95,7 @@
                          name = expression(paste("Acceleration (km dec"^{-2}, ")")),
                          oob = squish) +
     geom_sf(data = aus_detailed_shp, fill = "grey40", colour = NA) +
-    # geom_sf(data = eez_shp, fill = "grey90", colour = "black", lwd = 0.2) +
+    geom_sf(data = eez_shp, fill = NA, colour = "black", lwd = 0.3) +
     # facet_wrap(~esm) +
     coord_sf(expand = FALSE) +
     theme_minimal()
