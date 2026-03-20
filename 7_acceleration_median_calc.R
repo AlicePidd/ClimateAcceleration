@@ -1,6 +1,12 @@
-# Computing median decadal climate velocity across ALL 11 ESMs, NOT an ensemble, just the median
+# Computing median decadal climate velocity across ALL 11 ESMs, NOT an ensemble, just the median value
   # Written by Alice P
     # 7 March 2026
+
+
+# This script:
+  # Makes dfs of decadal acceleration for each SSP-term combo, and each of the 11 ESMs, saves it per combo
+  # Uses this to compute the median decadal acceleration and Q25/Q75 for each SSP-term combo, saves it as a df per combo
+  # Computes the same things as the second df, but keeps it as a spatraster just in case.
 
 
 
@@ -54,7 +60,7 @@
       dplyr::select(-col_name)
     saveRDS(df1, paste0(esm_fol, "/acceleration_decadal_ESMs_df_", ssp, "_", term, ".RDS"))
     
-    # Get median acceleration and the IQR for each SSP-term combo
+    # Get median acceleration and Q25/Q75 for each SSP-term combo
       # Each row is one 0.25° pixel with its median, Q25, and Q75 across the 11 ESMs
     df2 <- df1 %>% 
       group_by(lon, lat, ssp, term) %>% 

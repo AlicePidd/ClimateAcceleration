@@ -1,13 +1,14 @@
-# Computing decadal climate acceleration from the velocity layers in script #1
+# Computing decadal climate acceleration from the velocity layers
   # Written by Dave S and Alice P
     # 5 March 2026
 
 
-
-# Questions:
-  # Acceleration at each 1° of latitude - median of each band, per SSP (no time aspect)
-  # Acceleration within MPAs vs. outside MPAs - yearly median timeseries
-  # Acceleration per SSP, 
+# This script:
+  # Takes inputs of annual climate velocity computed on the rolling 21-year windows
+  # Masks these to the EEZ only
+  # Uses these masked velocities to compute climate acceleration (annual and decadal) per term, by calculating the slope (temptrend) of the velocities for this period
+  # Saves the acceleration outputs as both annual and decadal, and splits them into SSP-term files, as well as keeping them as 4 files per SSP with 44 layers (per ESM (x11) and term (x4))
+  # OISST (recent/historical term) is included
 
 
 
@@ -25,7 +26,6 @@
 
   fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "") # Timeseries velocity by esm, ssp
-  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_terms", "") # Velocity by term, esm, ssp
   accel_yr_fol <- make_folder(source_disk, "4_acceleration_aus", "annual") # Aus files
   accel_dec_fol <- make_folder(source_disk, "4_acceleration_aus", "decadal") # Aus files
   accel_term_yr_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "annual") # Aus files
@@ -71,7 +71,7 @@
   get_fastness <- function(ssp) {
     
     files <- dir(vocc_fol, full.names = TRUE, pattern = ssp)
-    oisst_files <- dir(vocc_term_fol, full.names = TRUE, pattern = "OISST")
+    oisst_files <- dir(vocc_fol, full.names = TRUE, pattern = "OISST")
     
       do_ssps <- function(f, term, rate) { 
         
@@ -83,13 +83,7 @@
           if (basename(f) %>% str_detect("OISST")) {
             term <- "historical"
           }
-        
-        # if(basename(f) %>% str_detect(., "OISST")){
-        #   term <- "historical"
-        # } else {
-        #   term <- term
-        # }
-        
+
         # Populate the range of years (corresponding to the relevant term) to subset the full timeseries by 
           if(term == "all") {
             range <- all_range # Full time series
@@ -102,6 +96,7 @@
         # Subset timeseries
         r <- readRDS(f) %>% 
           terra::subset(., str_detect(names(.), paste(range, collapse = "|"))) # Get only the relevant layers per the term years
+        
         # Mask it to the EEZ
         rr <- mask(r, reez)
         crs(rr) <- "EPSG:4326"
@@ -140,10 +135,6 @@
           rast()
         saveRDS(ssp_out_dec, file = paste0(accel_dec_fol, "/acceleration_decadal_", ssp, "_aus.RDS"))
 
-      # OISST (historical)
-        oisst_out <- do_ssps(oisst_files, "historical", 0) # Not super clean code, this will be re-run 4 times, but ehhh
-        saveRDS(oisst_out, file = paste0(accel_yr_fol, "/acceleration_historical_aus.RDS"))
-      
       # Term layers
         ssp_term_yr <- map(term_list[2:5], ~{
           tt <- terra::subset(ssp_out_yr, grep(.x, names(ssp_out_yr), value = TRUE))
@@ -155,6 +146,10 @@
           saveRDS(tt, file = paste0(accel_term_dec_fol, "/acceleration_decadal_", ssp, "_", .x, "-term_aus.RDS"))
         })
         
+      # OISST (historical)
+        oisst_out <- do_ssps(oisst_files, "historical", 0) # Not super clean code, this will be re-run 4 times, but ehhh
+        saveRDS(oisst_out, file = paste0(accel_yr_fol, "/acceleration_historical_aus.RDS"))
+
   }
   
   tic()
