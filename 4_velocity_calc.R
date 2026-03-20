@@ -64,8 +64,8 @@
   oisst_files <- dir(oisst_fol, full.names = TRUE)
   
   term = "mid"
-  f <- files[67]
-  f <- oisst_files
+  # f <- files[67]
+  # f <- oisst_files
   
   
   get_velocity <- function(f, yrs, term) {

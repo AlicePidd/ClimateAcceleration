@@ -33,9 +33,9 @@
   median_fol <- make_folder(source_disk, "5_accleration_aus_df_median_terms", "")
   
 
-  # pal_accel_div <- RColorBrewer::brewer.pal(11, "BrBG")
-  pal_accel_div <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#E6DDC5", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
-  # pal_accel_div <- c("#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
+  pal_accel_div <- RColorBrewer::brewer.pal(11, "RdBu")
+  # pal_accel_div <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#E6DDC5", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
+  pal_accel_div <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
   pal_vel_seq <- c("#F7FBFF", "#DEEBF7", "#C6DBEF", "#9ECAE1","#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B")
   
   
@@ -80,21 +80,20 @@
   r <- readRDS("/Volumes/AliceShield/acceleration_data/5_accleration_aus_df_median_terms/acceleration_median_df_ssp245_mid-term.RDS")
   
   # Symmetric limits for diverging scale
-  abs_max_a <- max(r$median_accel, na.rm = TRUE) %>% 
-    ceiling()
-  abs_min_a <- min(r$median_accel, na.rm = TRUE) %>% 
-    floor()
-  
-  
+  lims <- quantile(r$median_accel, c(0.05, 0.95), na.rm = TRUE)
+  lims1 <- lims %>% 
+    round(lims[1]) %>% 
+    round(lims[2], digits = 1)
+
   ggplot() +
-    geom_raster(data = r, 
+    geom_tile(data = r, 
                 aes(x = lon, y = lat, fill = median_accel)) +
     scale_fill_gradientn(colours = pal_accel_div,
-                         limits = c(-5, abs_max_a),
+                         limits = c(min(lims), max(lims)), 
                          na.value = "transparent",
                          name = expression(paste("Acceleration (km dec"^{-2}, ")")),
                          oob = squish) +
-    geom_sf(data = aus_detailed_shp, fill = "grey40", colour = NA) +
+    # geom_sf(data = aus_detailed_shp, fill = "grey70", colour = NA) +
     geom_sf(data = eez_shp, fill = NA, colour = "black", lwd = 0.3) +
     # facet_wrap(~esm) +
     coord_sf(expand = FALSE) +
