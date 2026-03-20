@@ -20,7 +20,7 @@
   oisst_fol <- make_folder(source_disk, "1_OISST_annual_Aus", "") # From Dave
   fn_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "")
-  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_termsplit", "")
+  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_terms", "")
   
   
   

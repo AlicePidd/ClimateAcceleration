@@ -25,9 +25,9 @@
 
   fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "") # Timeseries velocity by esm, ssp
-  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_termsplit", "") # Velocity by term, esm, ssp
+  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_terms", "") # Velocity by term, esm, ssp
   accel_fol <- make_folder(source_disk, "4_acceleration_aus", "") # Aus files
-  accel_term_fol <- make_folder(source_disk, "4_acceleration_aus_termsplit", "") # Aus files
+  accel_term_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "") # Aus files
   
   
   
@@ -68,8 +68,7 @@
   
   get_fastness <- function(ssp) {
     
-    files <- dir(vocc_fol, full.names = TRUE, pattern = ssp) %>% # Get the files for the ssp we are going for
-      str_subset(., "ssp119|ssp534-over", negate = TRUE) 
+    files <- dir(vocc_fol, full.names = TRUE, pattern = ssp)
     oisst_files <- dir(vocc_term_fol, full.names = TRUE, pattern = "OISST")
     
       do_ssps <- function(f, term) { 
@@ -96,9 +95,12 @@
         # Subset timeseries
         r <- readRDS(f) %>% 
           terra::subset(., str_detect(names(.), paste(range, collapse = "|"))) # Get only the relevant layers per the term years
-        
+        # Mask it to the EEZ
+        rr <- mask(r, reez)
+        crs(rr) <- "EPSG:4326"
+
         # Calculate the slope i.e., acceleration of velocity, for each ssp, term, and esm
-        slope <- tempTrend(r, 3)[[1]] 
+        slope <- tempTrend(rr, 3)[[1]] 
         names(slope) <- paste0("slope_", ssp, "_", esm, "_", term) # Name the layers accordingly
         return(slope)
       }
@@ -110,17 +112,17 @@
       }) %>%
         flatten() %>% 
         rast()
-      saveRDS(ssp_out, file = paste0(accel_fol, "acceleration_yearly_", ssp, "_aus.RDS"))
+      saveRDS(ssp_out, file = paste0(accel_fol, "acceleration_", ssp, "_aus.RDS"))
       # Each file has 53 layers: 1 for the historical OISST layer, and 1 per ESM, SSP, term combo (x52)
 
       # OISST (historical)
       oisst_out <- do_ssps(oisst_files, "historical") # Not super clean code, this will be re-run 4 times, but ehhh
-      saveRDS(oisst_out, file = paste0(accel_fol, "acceleration_yearly_historical_aus.RDS"))
+      saveRDS(oisst_out, file = paste0(accel_fol, "acceleration_historical_aus.RDS"))
       
       # Term layers
       ssp_term <- map(term_list[2:5], ~{
         tt <- terra::subset(ssp_out, grep(.x, names(ssp_out), value = TRUE))
-        saveRDS(tt, file = paste0(accel_term_fol, "acceleration_yearly_", ssp, "_", .x, "-term_aus.RDS"))
+        saveRDS(tt, file = paste0(accel_term_fol, "acceleration_", ssp, "_", .x, "-term_aus.RDS"))
       })
         
   }

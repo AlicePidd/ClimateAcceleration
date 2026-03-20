@@ -15,7 +15,7 @@
   
 # Folders ----------------------------------------------------------------------
 
-  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_termsplit", "")
+  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_terms", "")
   median_fol <- make_folder(source_disk, "3_velocity_median_terms", "")
 
 
