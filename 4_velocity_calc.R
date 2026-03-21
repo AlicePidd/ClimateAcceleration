@@ -1,6 +1,19 @@
-# Computing velocity from annual OISST layers
+# Computing annual AND decadal velocity (km.decade) from annual SST layers, using a 21-year rolling window
   # Written by Dave S and Alice P
     # 5 March 2026
+
+
+
+# This script:
+  # Makes rolling 21-year windows for all the years in each term, where each term year is the center year +- 10 years each side
+  # Sources the VoCC functions needed (spatGrad, tempTrend, gVoCC)
+  # Uses yearly SST data from 11 ESMs
+  # Subsets the yearly tos data for the corresponding 21-year windows for each term (e.g., for near-term 2021-2040, SST data from 2031-2050)
+    # Long-term is only 2081-2090 as we only had projected SST data up to 2100. Velocity computation up to 2100 would require projected SST data to 2110.
+  # Calculates the spatGrad and tempTrend for these years, and uses these to calculate gVoCC, which corresponds to the middle year (11th of 21) of each 21-year rolling window
+  # Each layer is named with that 11th year, to yield 1 file of annual climate velocity (km/year) for each ESM under each SSP, for the full 2021-2090
+  # These files are also saved as the term splits
+  # The same is done for the historical period (1995-2014)
 
 
 
@@ -19,8 +32,11 @@
   sst_fol <- make_folder(source_disk, "1_CMIP_regridded_OISST_DBC_sst_annual_Aus", "") # From Dave
   oisst_fol <- make_folder(source_disk, "1_OISST_annual_Aus", "") # From Dave
   fn_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
-  vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "")
-  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_terms", "")
+  # vocc_fol <- make_folder(source_disk, "2_velocity_rolling", "")
+  vocc_yr_fol <- make_folder(source_disk, "2_velocity_rolling", "annual")
+  vocc_dec_fol <- make_folder(source_disk, "2_velocity_rolling", "decadal")
+  vocc_term_yr_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "annual")
+  vocc_term_dec_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal")
   
   
   
@@ -36,7 +52,7 @@
   near_range <- 2021:2040 # Projection terms
   mid_range <- 2041:2060
   intermediate_range <- 2061:2080
-  long_range <- 2080:2090
+  long_range <- 2081:2090
   
   all_years <- map(all_range, make_rolling_seq)
   recent_years <- map(recent_range, make_rolling_seq)
@@ -63,8 +79,8 @@
     str_subset(., "ssp119|ssp534-over|CESM2-WACCM|GFDL-ESM4", negate = TRUE) # None of these files
   oisst_files <- dir(oisst_fol, full.names = TRUE)
   
-  term = "mid"
-  # f <- files[67]
+  # term = "all"
+  # f <- files[44]
   # f <- oisst_files
   
   
@@ -88,7 +104,7 @@
     
     spt_raster <- rast(f) %>% 
       crop(., e1) # Crop
-    spt_raster <- mask(spt_raster, mask_land) # Mask
+    spt_raster <- mask(spt_raster, mask_land) # Mask out land
     names(spt_raster) <- time(spt_raster) %>% 
       year()
     
@@ -108,22 +124,34 @@
         return(out)
       }
     
-    result <- map(indexing, compute) %>% 
-      rast()
-    saveRDS(result, 
-            if(term == "all") {
-              paste0(vocc_fol, "vocc_yearly_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS")
-            } else if (term == "recent") {
-              paste0(vocc_term_fol, "vocc_yearly_historical_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
-            } else {
-              paste0(vocc_term_fol, "vocc_yearly_", ssp, "_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
-            })
+    result <- map(indexing, compute) %>% rast()  # km/year
+    result_decadal <- result * 10 # km/decade
+
+    make_path <- function(rate) {
+      fol <- if(rate == "annual") {
+        if(term == "all") vocc_yr_fol else vocc_term_yr_fol
+      } else {
+        if(term == "all") vocc_dec_fol else vocc_term_dec_fol
+      }
+      
+      if(term == "all") {
+        paste0(fol, "/vocc_", rate, "_", ssp, "_", esm, "_", min(range), "-", max(range), ".RDS")
+      } else if(term == "recent") {
+        paste0(fol, "/vocc_", rate, "_historical_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
+      } else {
+        paste0(fol, "/vocc_", rate, "_", ssp, "_", esm, "_", term, "_", min(range), "-", max(range), ".RDS")
+      }
+    }
+
+    saveRDS(result, make_path("annual")) # km/year
+    saveRDS(result_decadal, make_path("decadal")) # km/decade
+      
   }
-  
+     
   # Full projected time series 2015-2100
   tic()
   walk(files, ~get_velocity(.x, years, "all")) 
-  toc() # 29 min on Alice's machine
+  toc() # 20 min on Alice's machine
 
   # By terms
   tic()
@@ -131,12 +159,13 @@
     message("Processing: ", term, "-term")
     walk(files, ~get_velocity(.x, years, term))
   })
-  toc() # 30 mins on Alice's machine
+  toc() # 19 mins on Alice's machine
 
   # For the recent term (using OISST data instead of CMIP)
   tic()
   walk(oisst_files, ~get_velocity(.x, years, "recent")) 
-  toc() # 9 sec
+  toc() # 8 sec
   
+  beep(2)
   
   

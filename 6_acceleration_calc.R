@@ -4,7 +4,7 @@
 
 
 # This script:
-  # Takes inputs of annual climate velocity computed on the rolling 21-year windows
+  # Takes inputs of annual climate velocity computed on the rolling 21-year windows (script #4)
   # Masks these to the EEZ only
   # Uses these masked velocities to compute climate acceleration (annual and decadal) per term, by calculating the slope (temptrend) of the velocities for this period
   # Saves the acceleration outputs as both annual and decadal, and splits them into SSP-term files, as well as keeping them as 4 files per SSP with 44 layers (per ESM (x11) and term (x4))

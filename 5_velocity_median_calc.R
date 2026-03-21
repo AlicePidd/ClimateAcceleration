@@ -1,4 +1,4 @@
-# Computing median climate velocity across ALL 11 ESMs, NOT an ensemble, just the median
+# Computing median DECADAL climate velocity across ALL 11 ESMs, NOT an ensemble, just the median
   # Written by Alice P
     # 7 March 2026
 
@@ -15,42 +15,73 @@
   
 # Folders ----------------------------------------------------------------------
 
-  vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_terms", "")
-  median_fol <- make_folder(source_disk, "3_velocity_median_terms", "")
+  # vocc_term_yr_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "annual")
+  vocc_term_dec_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") # Yearly climate velocity (km/year)
+  esm_fol <- make_folder(source_disk, "3_velocity_decadal_ESMs_terms", "dfs")
+  median_df_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs") 
+  median_rast_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts") 
 
 
-  
-  
+    
 # Get the median climate velocity across all ESMs together, per SSP-term combo -------------
 
-  get_median <- function(ssp, term) {
-    message("Processing: ", ssp, " - ", term)
+  files <- dir(vocc_term_dec_fol, full.names = TRUE, pattern = ".RDS") %>% 
+    str_subset("historical", negate = TRUE)
+  files
+  
+  get_velocity_dfs <- function(ssp, term, files, rate) {
+    message("Processing: ", ssp, ", ", term)
     
-    # Get files for each ssp-term combo
-    combo_files <- dir(vocc_term_fol, full.names = TRUE) %>% 
-      str_subset("534-over|ssp119|OISST", negate = TRUE) %>% 
-      str_subset(ssp) %>% 
+    # Get all ESM files for this SSP-term combo
+    combo_files <- files %>%
+      str_subset(ssp) %>%
       str_subset(term)
     
-    stack <- map(combo_files, readRDS) %>%  # Load and stack all ESMs into one spatraster
-      rast()
-    stack_median <- app(stack, median, na.rm = TRUE) # Median across ESMs
-    stack_min <- app(stack, min, na.rm = TRUE) # Min across ESMs
-    stack_max <- app(stack, max, na.rm = TRUE) # Max across ESMs
+    # Make df of velocity per ESM, for each SSP-term combo, and keep the lat/lon
+      df1 <- map_dfr(combo_files, function(f) {
+        esm_name <- basename(f) %>% str_split_i("_", 4)
+        readRDS(f) %>%
+          as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+          as_tibble() %>%
+          rename(lon = 1, lat = 2) %>%
+          pivot_longer(cols      = -c(lon, lat),
+                       names_to  = "col_name",
+                       values_to = "velocity") %>%
+          mutate(ssp  = str_split_i(col_name, "_", 2),
+                 esm  = esm_name,
+                 term = paste0(term, "-term"),
+                 rate = rate) %>%
+          dplyr::select(-col_name)
+      })
+      saveRDS(df1, paste0(esm_fol, "/velocity_", rate, "_ESMs_df_", ssp, "_", term, ".RDS"))
 
-    full_stack <- c(stack_median, stack_min, stack_max) # Stack them together
-    names(full_stack) <- c(paste0(names(stack_median), "_", ssp, "_", term, "-term"),
-                           paste0(names(stack_min), "_", ssp, "_", term, "-term"),
-                           paste0(names(stack_max), "_", ssp, "_", term, "-term"))
-    o_nm <- paste0(median_fol, "vocc_median_", ssp, "_", term, ".RDS")
-    saveRDS(full_stack, o_nm)
+    # Get median velocity and Q25/Q75 for each SSP-term combo
+      df2 <- df1 %>%
+        group_by(lon, lat, ssp, term) %>%
+        summarise(median_velocity = median(velocity, na.rm = TRUE),
+                  q25             = quantile(velocity, 0.25, na.rm = TRUE),
+                  q75             = quantile(velocity, 0.75, na.rm = TRUE),
+                  .groups         = "drop")
+      saveRDS(df2, paste0(median_df_fol, "/velocity_", rate, "_median_df_", ssp, "_", term, ".RDS"))
+
+    # Get median velocity and the Q25/Q75 but keep it as a rast
+      r_stack <- map(combo_files, readRDS) %>% rast()
+      r_median <- app(r_stack, median, na.rm = TRUE)
+      r_q25 <- app(r_stack, \(x) quantile(x, 0.25, na.rm = TRUE)) # \(x) is a cool way of doing function(x) with LESS TYPING! Doesn't work with old R though.
+      r_q75 <- app(r_stack, \(x) quantile(x, 0.75, na.rm = TRUE))
+      
+      out_stack <- c(r_median, r_q25, r_q75)
+      names(out_stack) <- c(paste0("median_", ssp, "_", term),
+                            paste0("q25_", ssp, "_", term),
+                            paste0("q75_",    ssp, "_", term))
+      saveRDS(out_stack, paste0(median_rast_fol, "/velocity_", rate, "_median_rast_", ssp, "_", term, ".RDS"))
   }
   
-  combos <- expand_grid(ssp = ssp_list, term = term_list[2:5]) # No recent-term
-  walk2(combos$ssp, combos$term, get_median)
-  
-  
+  combos <- expand_grid(ssp = ssp_list, term = term_list[2:5])
+  combos
+  tic()
+  walk2(combos$ssp, combos$term, get_velocity_dfs,
+        files = files, rate = "decadal")
+  toc()
+  beep(2)
 
-  
-  
-  

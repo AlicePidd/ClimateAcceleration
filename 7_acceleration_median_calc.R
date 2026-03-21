@@ -29,7 +29,7 @@
   
   
   
-# Get the median climate velocity across all ESMs together, per SSP-term combo -------------
+# Get the median climate acceleration across all ESMs together, per SSP-term combo -------------
 
   files <- dir(accel_fol, full.names = TRUE, pattern = ".RDS") %>% 
     str_subset("historical", negate = TRUE)
