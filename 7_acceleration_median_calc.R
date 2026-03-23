@@ -22,9 +22,9 @@
 # Folders ----------------------------------------------------------------------
 
   accel_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "decadal")
-  esm_fol <- make_folder(source_disk, "4_accleration_aus_ESMs_terms", "dfs")
-  median_df_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "dfs")
-  median_rast_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "rasts")
+  esm_fol <- make_folder(source_disk, "4_acceleration_aus_ESMs_terms", "dfs")
+  median_df_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "dfs")
+  median_rast_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
   
   
   
@@ -104,16 +104,11 @@
       df_hist <- r %>%
         as.data.frame(xy = TRUE, na.rm = TRUE) %>%
         as_tibble() %>%
-        rename(lon = 1, lat = 2) %>%
-        pivot_longer(cols      = -c(lon, lat),
-                     names_to  = "col_name",
-                     values_to = "accel") %>%
+        rename(lon = 1, lat = 2, median_accel = 3) %>%
         mutate(ssp  = "historical",
-               esm  = "OISST",
                term = "recent-term",
-               rate = "decadal") %>%
-        dplyr::select(-col_name)
-      df_hist
+               q25  = NA_real_,
+               q75  = NA_real_)
       saveRDS(df_hist, paste0(median_df_fol, "/acceleration_decadal_median_df_historical_recent-term.RDS"))
     
     # rast version

@@ -31,8 +31,8 @@
 
   # esm_fol <- make_folder(source_disk, "5_accleration_aus_df_ESMs_terms", "")
   # accel_fol <- make_folder(source_disk, "5_accleration_aus_df_median_terms", "")
-  median_dfs_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "dfs")
-  median_rast_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "rasts")
+  median_dfs_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "dfs")
+  median_rast_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
   plot_fol <- make_folder(source_disk, "7_acceleration_aus_plot", "spatial") # Aus files
   
   
@@ -40,30 +40,30 @@
   
 # Lists ------------------------------------------------------------------------
     
-  ssp_cols <- c("historical" = "#5F5E5A",
-                "ssp126" = col_ssp126,
-                "ssp245" = col_ssp245,
-                "ssp370" = col_ssp370,
-                "ssp585" = col_ssp585)
-  
-  ssp_lty <- c("historical" = "dashed",
-               "ssp126" = "solid", 
-               "ssp245" = "solid",
-               "ssp370" = "solid",
-               "ssp585" = "solid")
-  
-  ssp_labels <- c("historical" = "Historical",
-                  "ssp126" = "SSP1-2.6",
-                  "ssp245" = "SSP2-4.5",
-                  "ssp370" = "SSP3-7.0",
-                  "ssp585" = "SSP5-8.5")
-  
-  term_labels <- c("near" = "Near-term (2021–2040)",
-                   "mid" = "Mid-term (2041–2060)",
-                   "intermediate" = "Intermediate-term (2061–2080)",
-                   "long" = "Long-term (2081–2090)")
+  # ssp_cols <- c("historical" = "#5F5E5A",
+  #               "ssp126" = col_ssp126,
+  #               "ssp245" = col_ssp245,
+  #               "ssp370" = col_ssp370,
+  #               "ssp585" = col_ssp585)
+  # 
+  # ssp_lty <- c("historical" = "dashed",
+  #              "ssp126" = "solid", 
+  #              "ssp245" = "solid",
+  #              "ssp370" = "solid",
+  #              "ssp585" = "solid")
+  # 
+  # ssp_labels <- c("historical" = "Historical",
+  #                 "ssp126" = "SSP1-2.6",
+  #                 "ssp245" = "SSP2-4.5",
+  #                 "ssp370" = "SSP3-7.0",
+  #                 "ssp585" = "SSP5-8.5")
+  # 
+  # term_labels <- c("near" = "Near-term (2021–2040)",
+  #                  "mid" = "Mid-term (2041–2060)",
+  #                  "intermediate" = "Intermediate-term (2061–2080)",
+  #                  "long" = "Long-term (2081–2090)")
 
-  term_order <- term_list[2:5]
+  term_order <- term_list
   ssp_order <- ssp_list
   
   
@@ -73,192 +73,251 @@
   
   ## Load and bind all the median df files ------------
   
-    df_files <- dir(median_dfs_fol, full.names = TRUE, pattern = ".RDS")
-    df_files # Use for computing lims etc.
+  future_files <- dir(median_dfs_fol, full.names = TRUE, pattern = ".RDS") %>% 
+    str_subset(., "historical", negate = TRUE) # Gotta keep these out so that it doesn't skew the quantiles
+  future_files # Use for computing lims etc.
     
-    all_df <- map(df_files, ~{
-      readRDS(.x)
-    }) %>% 
-      bind_rows()
-    all_df
   
-  
-  ## Load and stack all the median rast files ------------
-  
-    rast_files <- dir(median_rast_fol, full.names = TRUE, pattern = ".RDS")
-    rast_files # Use for plotting
+  # ## Load and stack all the median rast files ------------
+  # 
+  #   rast_files <- dir(median_rast_fol, full.names = TRUE, pattern = ".RDS")
+  #   rast_files # Use for plotting
+  #   
+  #   all_r <- map(rast_files, ~{
+  #     readRDS(.x)[[1]]
+  #   }) %>%
+  #     rast()
+  #   all_r
+
     
-    all_r <- map(rast_files, ~{
-      readRDS(.x)[[1]]
-    }) %>%
-      rast()
-    all_r
-  
 
-
-  
+    
+    
 # Palettes ---------------------------------------------------------------------
-
+  
   pal_div_RdBu <- rev(RColorBrewer::brewer.pal(11, "RdBu"))
   pal_div_heat <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#F7FBFF", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
-  pal_div_RdBualt <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
-  pal_div_BrBG <- rev(RColorBrewer::brewer.pal(11, "BrBG"))
+  # pal_div_RdBualt <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
+  # pal_div_BrBG <- rev(RColorBrewer::brewer.pal(11, "BrBG"))
   # pal_div_BlOr <- c("#005F73", "#208f99", "#52c4cc", "#99faff", "#ccfeff", "#e6ffff", "#ffe6cc", "#ffad66", "#ff8f32", "#cc5801", "#994000") # Manual version
   pal_div_coco <- rev(c("#881d00", "#af6125", "#f4e3c7", "#F7FBFF", "#1bb5af", "#0076bb", "#172869")) # Manual version
-  pal_div_geyser <- c("#018080", "#70a494", "#b4c8a8", "#F7FBFF", "#edbb8a", "#de8a5a", "#ca562d") # Manual version
-  
-  
+  # pal_div_geyser <- c("#018080", "#70a494", "#b4c8a8", "#F7FBFF", "#edbb8a", "#de8a5a", "#ca562d") # Manual version
+    
+
   
   
   
 # Calculate global quantiles by which to scale the plots -----------------------
+    
+  ## Projected data
+    future_df <- map(future_files, ~{
+      readRDS(.x)
+      }) %>% 
+      bind_rows()
+    future_df
+    
+    future_range <- range(future_df$median_accel, na.rm = TRUE) # no historical: -203.9491  111.5277, with historical -401.0729  490.0310
+    future_range
+    
+    ### IQR lims -------
+      q25q75 <- quantile(future_df$median_accel, c(0.25, 0.75), na.rm = TRUE)
+      q25q75
+        # No Historical
+          #          25%       75% 
+          #   -1.4510885  0.7507432
+        # With Historical
+          #         25%       75% 
+          #   -1.4625752  0.7817445 
+      
+      future_lims <- round(max(abs(q25q75)), digits = 1)  # ~1.46 so will go with ± 1.5 around 0
+      future_lims
+      
   
-  range_df <- range(all_df$median_accel, na.rm = TRUE) # -203.9491  111.5277
-  
-  
-  q5q95 <- quantile(all_df$median_accel, c(0.05, 0.95), na.rm = TRUE)
-  q5q95
-    #          5%       95% 
-    #   -5.488570  3.071301 
-    ## Roughly -5 to 5
-  abs_lim <- max(abs(q5q95))  # 5.48857
-  abs_lims <- round(abs_lim, digits = 1) # 5.5
-
-    # Qs <- quantile(all_df$median_accel, c(0.25, 0.75), na.rm = TRUE)
-    # Qs
-    #   #          25%        75% 
-    #   #   -1.4510885  0.7507432 
-
-  ## Make it absolute - this makes sense in my mind?
-    abs_lim <- max(abs(q5q95))  # 5.48857
-    abs_lims <- round(abs_lim, digits = 1) # will go with ± 5.5 around 0
-
+    ### 5th-9th percentile lims -------
+      q5q95 <- quantile(all_df$median_accel, c(0.05, 0.95), na.rm = TRUE)
+      q5q95
+        # No Historical
+          #          5%       95% 
+          #   -5.488570  3.071301 
+        # With historical
+          #          5%       95% 
+          #   -5.422862  3.360769 
+    
+      future_lims <- round(max(abs(q5q95)), digits = 1)  # 5.4, so will go with ± 5.5 around 0
+      future_lims
+      
   
   
 
 # Plot spatially per SSP-term combination --------------------------------------
+
+  plot_accel_future <- function(ssp, files, lims, lim_method, pal, pal_name) {
     
-  ## Plot -------------
+    files_ssp <- files %>% 
+      str_subset(ssp) %>% 
+      .[order(map_int(., ~ detect_index(term_order, \(t) grepl(t, .x))))]
     
-    plot_accel_ssp <- function(ssp, df_files, lims, pal, pal_name) {
+    r <- map(files_ssp, readRDS) %>% 
+      bind_rows() %>% 
+      mutate(term = factor(term, levels = paste0(term_order, "-term")))
+    
+    p <- ggplot() +
+      geom_raster(data = r, aes(x = lon, y = lat, fill = median_accel)) +
+      scale_fill_gradientn(colours = pal,
+                           limits = c(-lims, lims),
+                           na.value = "transparent",
+                           name = expression(paste("Median climate acceleration (km decade"^{-2}, ")")),
+                           oob = squish,
+                           guide = guide_colorbar(barwidth  = 12,
+                                                  barheight = 0.5,
+                                                  title.position = "top",
+                                                  title.hjust    = 0.5,
+                                                  direction = "horizontal")) +
+      geom_sf(data = eez_shp, fill = NA, colour = "black", linewidth = 0.3) +
+      geom_sf(data = oceania_stanford_shp, fill = "grey70", colour = NA) +
+      coord_sf(expand = FALSE, xlim = c(105, 180), ylim = c(-50, -5)) +
+      facet_wrap(~ term, ncol = 1) +
+      labs(title = paste0("Median decadal acceleration -- ", ssp)) +
+      theme_classic(base_size = 10) +
+      theme(legend.position = "bottom",
+            legend.title    = element_text(size = 8),
+            legend.text     = element_text(size = 7),
+            plot.subtitle   = element_text(size = 9, colour = "grey30"))
+    
+    o_nm <- paste0(plot_fol, "/spatial_median_acceleration_decadal_", ssp, 
+                   "_pal-", pal_name, "_", lim_method, "_lims", lims, ".png")
+    ggsave(filename = o_nm, plot = p, width = 8, height = 20, dpi = 600)
+  }
       
-      # Subset and reorder files for this SSP
-      files_ssp <- df_files %>% 
-        str_subset(ssp) %>% 
-        .[map_int(., ~ detect_index(term_order, \(t) grepl(t, .x)))]  # reorder by term_order
-      
-      # Load and combine
-      r <- map(files_ssp, readRDS) %>% 
-        bind_rows()
-      
-      # Make term a factor so facets respect term_order
-      r <- r %>% 
-        mutate(term = factor(term, levels = paste0(term_order, "-term")))
-      
-      p <- ggplot() +
-        geom_raster(data = r, aes(x = lon, y = lat, fill = median_accel)) +
-        scale_fill_gradientn(colours = pal,
-                             limits = c(-lims, lims),
-                             na.value = "transparent",
-                             name = expression(paste("Median climate acceleration (km decade"^{-2}, ")")),
-                             oob = squish,
-                             guide = guide_colorbar(barwidth  = 12,
-                                                    barheight = 0.5,
-                                                    title.position = "top",
-                                                    title.hjust    = 0.5,
-                                                    direction = "horizontal")) +
-        geom_sf(data = eez_shp, fill = NA, colour = "black", linewidth = 0.3) +
-        # geom_sf(data = aus_detailed_shp, fill = "grey70", colour = NA) +
-        geom_sf(data = oceania_stanford_shp, fill = "grey70", colour = NA) +
-        coord_sf(expand = FALSE, xlim = c(105, 180), ylim = c(-50, -5)) +
-        facet_wrap(~ term, ncol = 1) +
-        labs(title = paste0("Median decadal acceleration across all 11 ESMs -- ", ssp)) +
-        theme_classic(base_size = 10) +
-        theme(legend.position = "bottom",
-              legend.title    = element_text(size = 8),
-              legend.text     = element_text(size = 7),
-              plot.subtitle   = element_text(size = 9, colour = "grey30"))
-      
-      o_nm <- paste0(plot_fol, "/spatial_median_acceleration_decadal_", ssp, "_pal-", pal_name, "_lims", lims, ".png")
-      ggsave(filename = o_nm, plot = p, width = 8, height = 20, dpi = 600)
-    }
+  # Heat div palette
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                    lims = 5.5, lim_method = "Q5-Q95",
+                                    pal = pal_div_heat, pal_name = "div_heat"))
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                       lims = 1.5, lim_method = "IQR",
+                                       pal = pal_div_heat, pal_name = "div_heat"))
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                    lims = 25, lim_method = "arbitrary",
+                                    pal = pal_div_heat, pal_name = "div_heat"))
     
-    
-    ## Projected
-      # Heat div palette
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = abs_lims, 
-                                      pal = pal_div_heat, pal_name = "div_heat"))
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = 25, 
-                                      pal = pal_div_heat, pal_name = "div_heat"))
-      # RdBu div palette
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = abs_lims, 
-                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = 25, 
-                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
-      
-      # Coco div palette
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = abs_lims, 
-                                      pal = pal_div_coco, pal_name = "div_coco"))
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = 25, 
-                                      pal = pal_div_coco, pal_name = "div_coco"))
+  # RdBu div palette
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                    lims = 5.5, lim_method = "Q5-Q95",
+                                    pal = pal_div_RdBu, pal_name = "div_RdBu"))
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                       lims = 1.5, lim_method = "IQR",
+                                       pal = pal_div_RdBu, pal_name = "div_RdBu"))
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                    lims = 25, lim_method = "arbitrary",
+                                    pal = pal_div_RdBu, pal_name = "div_RdBu"))
+  
+  # Coco div palette
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                    lims = 5.5, lim_method = "Q5-Q95",
+                                    pal = pal_div_coco, pal_name = "div_coco"))
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                       lims = 1.5, lim_method = "IQR",
+                                       pal = pal_div_RdBu, pal_name = "div_RdBu"))
+    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+                                    lims = 25, lim_method = "arbitrary",
+                                    pal = pal_div_coco, pal_name = "div_coco"))
       
       
-    ## Historic period
-      # Heat div palette
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = abs_lims, 
-                                      pal = pal_div_heat, pal_name = "div_heat"))
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = 25, 
-                                      pal = pal_div_heat, pal_name = "div_heat"))
-      # RdBu div palette
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = abs_lims, 
-                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = 25, 
-                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
       
-      # Coco div palette
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = abs_lims, 
-                                      pal = pal_div_coco, pal_name = "div_coco"))
-      walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-                                      lims = 25, 
-                                      pal = pal_div_coco, pal_name = "div_coco"))
+      
+# Calculate global quantiles by which to scale the plots -----------------------
+      
+  ## Historical data
+    hist_files <- dir(median_dfs_fol, full.names = TRUE, pattern = "historical")
+      
+    hist_file <- readRDS(hist_files)
+    hist_file # Use for computing lims etc.
+  
+    ### IQR lims -------
+      q25q75_hist <- quantile(hist_file$median_accel, c(0.25, 0.75), na.rm = TRUE)
+      q25q75_hist
+      #         25%       75% 
+      #   -1.701465  1.714993 
+      
+      hist_lims <- round(max(abs(q25q75_hist)), digits = 1)  # ~1.71 so will go with ± 2 around 0
+      hist_lims
     
     
-    # # Earth div palette
-    # walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-    #                                 lims = abs_lims, 
-    #                                 pal = pal_div_geyser, pal_name = "div_geyser"))
-    # walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-    #                                 lims = 25, 
-    #                                 pal = pal_div_geyser, pal_name = "div_geyser"))
+    ### 5th-9th percentile lims -------
+      q5q95_hist <- quantile(hist_file$median_accel, c(0.05, 0.95), na.rm = TRUE)
+      q5q95_hist
+      #          5%       95% 
+      #   -4.659361  9.744097 
+      
+      hist_lims <- round(max(abs(q5q95_hist)), digits = 1)  # 9.74, so will go with ± 10 around 0
+      hist_lims
+      
+      
+      
     
-    # # Alternate RdBu div palette
-    # walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-    #                                 lims = abs_lims, 
-    #                                 pal = pal_div_RdBualt, pal_name = "div_RdBu-Alt"))
-    # walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-    #                                 lims = 25, 
-    #                                 pal = pal_div_RdBualt, pal_name = "div_RdBu-Alt"))
+# Plot spatially for historical only -------------------------------------------
+  
+  
+  plot_accel_hist <- function(file, lims, lim_method, pal, pal_name) {
     
-    # # BrBG div palette
-    # walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-    #                                 lims = abs_lims, 
-    #                                 pal = pal_div_BrBG, pal_name = "div_BrBG"))
-    # walk(ssp_list, ~ plot_accel_ssp(.x, df_files, 
-    #                                 lims = 25, 
-    #                                 pal = pal_div_BrBG, pal_name = "div_BrBG")) # Lowkey looks like a shit smear.
+    r <- readRDS(file) %>%
+      mutate(term = factor(term, levels = paste0(term_order, "-term")))
     
+    p <- ggplot() +
+      geom_raster(data = r, aes(x = lon, y = lat, fill = median_accel)) +
+      scale_fill_gradientn(colours = pal,
+                           limits = c(-lims, lims),
+                           na.value = "transparent",
+                           name = expression(paste("Median climate acceleration (km decade"^{-2}, ")")),
+                           oob = squish,
+                           guide = guide_colorbar(barwidth  = 12,
+                                                  barheight = 0.5,
+                                                  title.position = "top",
+                                                  title.hjust    = 0.5,
+                                                  direction = "horizontal")) +
+      geom_sf(data = eez_shp, fill = NA, colour = "black", linewidth = 0.3) +
+      geom_sf(data = oceania_stanford_shp, fill = "grey70", colour = NA) +
+      coord_sf(expand = FALSE, xlim = c(105, 180), ylim = c(-50, -5)) +
+      labs(title = "Median decadal acceleration -- historical (OISST)") +
+      theme_classic(base_size = 10) +
+      theme(legend.position = "bottom",
+            legend.title    = element_text(size = 8),
+            legend.text     = element_text(size = 7),
+            plot.subtitle   = element_text(size = 9, colour = "grey30"))
     
-    
-    
-    
+    o_nm <- paste0(plot_fol, "/spatial_median_acceleration_decadal_historical",
+                   "_pal-", pal_name, "_", lim_method, "_lims", lims, ".png")
+    ggsave(filename = o_nm, plot = p, width = 8, height = 6, dpi = 600)
+  }
+  
+  # Do it
+  plot_accel_hist(hist_files, 
+                  lims = 10, lim_method = "Q5-Q95", 
+                  pal = pal_div_heat, pal_name = "div_heat")
+  plot_accel_hist(hist_files, 
+                  lims = 1.7, lim_method = "IQR", 
+                  pal = pal_div_heat, pal_name = "div_heat")
+  plot_accel_hist(hist_files, 
+                  lims = 25, lim_method = "arbitrary", 
+                  pal = pal_div_heat, pal_name = "div_heat")
+  
+  plot_accel_hist(hist_files, 
+                  lims = 10, lim_method = "Q5-Q95", 
+                  pal = pal_div_RdBu, pal_name = "div_RdBu")
+  plot_accel_hist(hist_files, 
+                  lims = 1.7, lim_method = "IQR", 
+                  pal = pal_div_RdBu, pal_name = "div_RdBu")
+  plot_accel_hist(hist_files, 
+                  lims = 25, lim_method = "arbitrary", 
+                  pal = pal_div_RdBu, pal_name = "div_RdBu")
+
+  plot_accel_hist(hist_files, 
+                  lims = 10, lim_method = "Q5-Q95", 
+                  pal = pal_div_coco, pal_name = "div_coco")
+  plot_accel_hist(hist_files, 
+                  lims = 1.7, lim_method = "IQR", 
+                  pal = pal_div_coco, pal_name = "div_coco")
+  plot_accel_hist(hist_files, 
+                  lims = 25, lim_method = "arbitrary", 
+                  pal = pal_div_coco, pal_name = "div_coco")
+
