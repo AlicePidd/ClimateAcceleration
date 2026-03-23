@@ -7,7 +7,7 @@
 
 # Packages ---------------------------------------------------------------------
 
-pacman::p_load(pacman, tidyverse, purrr, furrr, ncdf4, terra, sf, tmap, beepr, tictoc,  parallel, parallelly, patchwork, ggrepel, ggthemes, janitor, rmapshaper, lwgeom, progressr, data.table, vegan, vctrs, gplots, mgcv, mgcViz, glmmTMB, gratia,  
+pacman::p_load(pacman, tidyverse, purrr, furrr, ncdf4, terra, sf, tmap, beepr, tictoc, parallel, parallelly, patchwork, ggrepel, scales, ggthemes, janitor, rmapshaper, lwgeom, progressr, data.table, vegan, vctrs, gplots, mgcv, mgcViz, glmmTMB, gratia,
                viridis, viridisLite, MoMAColors, PNWColors, NatParksPalettes, rcartocolor, ltc, scico, rcartocolor, MetBrewer, feathers, futurevisions, paletteer,
                CircStats
                # gglm, boot, GGally, MASSExtra, visreg, marginaleffects, 

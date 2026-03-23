@@ -30,15 +30,15 @@
 # Folders ----------------------------------------------------------------------
 
   esm_fol <- make_folder(source_disk, "5_accleration_aus_df_ESMs_terms", "")
-  median_fol <- make_folder(source_disk, "5_accleration_aus_df_median_terms", "")
-  
-
-  pal_accel_div <- RColorBrewer::brewer.pal(11, "RdBu")
-  # pal_accel_div <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#E6DDC5", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
-  pal_accel_div <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
-  pal_vel_seq <- c("#F7FBFF", "#DEEBF7", "#C6DBEF", "#9ECAE1","#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B")
+  accel_fol <- make_folder(source_disk, "5_accleration_aus_df_median_terms", "")
+  median_dfs_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "dfs")
+  median_rast_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "rasts")
   
   
+  
+  
+# Lists ------------------------------------------------------------------------
+    
   ssp_cols <- c("historical" = "#5F5E5A",
                 "ssp126" = col_ssp126,
                 "ssp245" = col_ssp245,
@@ -61,46 +61,61 @@
                    "mid" = "Mid-term (2041–2060)",
                    "intermediate" = "Intermediate-term (2061–2080)",
                    "long" = "Long-term (2081–2090)")
+
   
-# Get 95th percentile of the data and truncate by that value -------------------
   
-  a_files <- dir(accel_fol, full.names = TRUE)
-  a_files
   
-  m_files <- dir(median_fol, full.names = TRUE)
-  m_files
+# Files ------------------------------------------------------------------------
+  
+  ## Load and bind all the median df files ------------
+  
+    df_files <- dir(median_dfs_fol, full.names = TRUE, pattern = ".RDS")
+    df_files
+    
+    all_df <- map(df_files, ~{
+      readRDS(.x)
+    }) %>% 
+      bind_rows()
+    all_df
+  
+  
+  ## Load and stack all the median rast files ------------
+  
+    rast_files <- dir(median_rast_fol, full.names = TRUE, pattern = ".RDS")
+    rast_files
+    
+    all_r <- map(rast_files, ~{
+      readRDS(.x)[[1]]
+    }) %>%
+      rast()
+    all_r
   
 
-  all_r <- map(files, ~{
-    readRDS(.x)[[1]]
-  }) %>% 
-    rast()
-  
 
-  r <- readRDS("/Volumes/AliceShield/acceleration_data/5_accleration_aus_df_median_terms/acceleration_median_df_ssp245_mid-term.RDS")
   
-  # Symmetric limits for diverging scale
-  lims <- quantile(r$median_accel, c(0.05, 0.95), na.rm = TRUE)
-  lims1 <- lims %>% 
-    round(lims[1]) %>% 
-    round(lims[2], digits = 1)
+# Palettes ---------------------------------------------------------------------
 
-  ggplot() +
-    geom_tile(data = r, 
-                aes(x = lon, y = lat, fill = median_accel)) +
-    scale_fill_gradientn(colours = pal_accel_div,
-                         limits = c(min(lims), max(lims)), 
-                         na.value = "transparent",
-                         name = expression(paste("Acceleration (km dec"^{-2}, ")")),
-                         oob = squish) +
-    # geom_sf(data = aus_detailed_shp, fill = "grey70", colour = NA) +
-    geom_sf(data = eez_shp, fill = NA, colour = "black", lwd = 0.3) +
-    # facet_wrap(~esm) +
-    coord_sf(expand = FALSE) +
-    theme_minimal()
+  pal_accel_div <- RColorBrewer::brewer.pal(11, "RdBu")
+  pal_accel_div <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#E6DDC5", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
+  pal_accel_div <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
+  pal_vel_seq <- c("#F7FBFF", "#DEEBF7", "#C6DBEF", "#9ECAE1","#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B")
   
   
   
+  
+# Calculate global quantiles by which to scale the plots -----------------------
+  
+  lims <- quantile(all_df$median_accel, c(0.05, 0.95), na.rm = TRUE)
+  lims
+    #          5%       95% 
+    #   -5.488570  3.071301 
+    ## Roughly -5 to 5
+
+  Qs <- quantile(all_df$median_accel, c(0.25, 0.75), na.rm = TRUE)
+  Qs
+    #          25%        75% 
+    #   -1.4510885  0.7507432 
+
   
   
 
@@ -108,30 +123,30 @@
 
   load_median <- function(path) {
     r <- readRDS(path)
-    # layer 1 is always the median; layers 2-3 are min/max
-    r[[1]]
-  }
+    }
   
-  r_a_med <- load_median(
-    m_files %>% 
-      str_subset(., "ssp245") %>% 
-      str_subset(., "mid-term") 
-  )
-  r_a_med_eez <- mask(r_a_med, reez)
   
-  # Symmetric limits for diverging scale
-  abs_max_a <- max(abs(minmax(r_a_med_eez)), na.rm = TRUE) %>% 
-    ceiling()
+  names(all_r)
+  
+  
+  rast_med <- all_df %>% 
+    # subset(., "ssp245_mid-term")
+    filter(ssp == "ssp245" & term == "mid-term")  
+
    
+  
+  # Plot
   panel_A <- ggplot() +
-    tidyterra::geom_spatraster(data = r_a_med_eez) +
+    # tidyterra::geom_spatraster(data = rast_med) +
+    geom_raster(data = rast_med,
+                aes(x = lon, y = lat, fill = median_accel)) +
     scale_fill_gradientn(
       colours   = pal_accel_div,
       # limits    = c(-abs_max_a, abs_max_a),
-      limits    = c(-5, 5),
+      limits    = c(-25, 25),
       na.value  = "transparent",
-      name      = expression(paste("Acceleration (km dec"^{-2}, ")")),
-      oob = squish,
+      name      = expression(paste("Median climate acceleration (km dec"^{-2}, ")")),
+      oob = squish, # Truncates the values outside of the limits
       guide = guide_colorbar(
         barwidth  = 12,
         barheight = 0.5,
@@ -142,9 +157,9 @@
     ) +
     geom_sf(data = eez_shp, fill = NA, colour = "black",
             linewidth = 0.3) +
-    geom_sf(data = aus_detailed_shp, fill = "grey10", colour = NA) +
+    # geom_sf(data = aus_detailed_shp, fill = "grey30", colour = NA) +
     coord_sf(expand = FALSE) +
-    labs(title = NULL, subtitle = "SSP2-4.5 | mid-term (2041–2060)") +
+    labs(title = NULL, subtitle = "SSP2-4.5 | mid-term (2041–2060) | Median acceleration across 11 ESMs") +
     theme_bw(base_size = 10) +
     theme(
       legend.position  = "bottom",
