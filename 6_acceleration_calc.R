@@ -28,9 +28,9 @@
   # vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "") # Timeseries velocity by esm, ssp
   vocc_dec_fol <- make_folder(source_disk, "2_velocity_rolling", "decadal")
   
-  accel_yr_fol <- make_folder(source_disk, "4_acceleration_aus", "annual") # Aus files
+  # accel_yr_fol <- make_folder(source_disk, "4_acceleration_aus", "annual") # Aus files
   accel_dec_fol <- make_folder(source_disk, "4_acceleration_aus", "decadal") # Aus files
-  accel_term_yr_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "annual") # Aus files
+  # accel_term_yr_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "annual") # Aus files
   accel_term_dec_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "decadal") # Aus files
   
   
@@ -62,11 +62,11 @@
   #   str_subset(., "ssp534-over", negate = TRUE)
   # f <- files[1] # Just pick a file
   # yrs <- as.character(mid_range)
-  ssp <- "ssp245"
+  # ssp <- "ssp245"
   # term <- "mid"
 
   
-    rate = "decadal"
+
     
 # Acceleration function --------------------------------------------------------
   
@@ -83,13 +83,13 @@
           str_split_i(., "_", 4)
         
           if (basename(f) %>% str_detect("OISST")) {
-            term <- "historical"
+            term <- "recent"
           }
 
         # Populate the range of years (corresponding to the relevant term) to subset the full timeseries by 
           if(term == "all") {
             range <- all_range # Full time series
-          } else if (term == "historical") {
+          } else if (term == "recent") {
             range <- recent_range
           } else {
             range <- get(paste0(term, "_range")) # Series of years in the term
@@ -105,15 +105,7 @@
 
         # Calculate the slope i.e., acceleration of velocity, for each ssp, term, and esm
         slope <- tempTrend(rr, 3)[[1]]
-        
-          # if (rate == 10) {
-          #   prefix <- "slope_decadal"
-          # } else if(rate == 1) {
-          #   prefix <- "slope_annual"
-          # } else{
-          #   prefix <- "slope"
-          # }
-        
+
         names(slope) <- paste0("slope_", rate, "-velocity_", ssp, "_", esm, "_", term)
         return(slope)
       }
@@ -148,9 +140,10 @@
         })
         
       # OISST (historical)
-        oisst_out <- do_ssps(oisst_files, "historical", 0) # Not super clean code, this will be re-run 4 times, but ehhh
-        saveRDS(oisst_out, file = paste0(accel_yr_fol, "/acceleration_historical_aus.RDS"))
-
+        oisst_out <- do_ssps(oisst_files, "historical", "decadal") # Not super clean code, this will be re-run 4 times, but ehhh
+        saveRDS(oisst_out, file = paste0(accel_dec_fol, "/acceleration_historical_recent-term_aus.RDS")) # Save in both places
+        saveRDS(oisst_out, file = paste0(accel_term_dec_fol, "/acceleration_decadal-velocity_historical_recent-term_aus.RDS"))
+        
   }
   
   tic()
@@ -158,7 +151,7 @@
   toc() # 25 seconds on Alice's machine
   
   
-  
+
 
   
   
