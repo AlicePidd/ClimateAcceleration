@@ -17,8 +17,8 @@
 # Folders ----------------------------------------------------------------------
 
   acc_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "decadal")
-  median_dfs_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "dfs")
-  median_rast_fol <- make_folder(source_disk, "5_accleration_aus_median_terms", "rasts")
+  median_dfs_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "dfs")
+  median_rast_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
   plot_fol <- make_folder(source_disk, "7_acceleration_aus_plot", "latitude") # Aus files
   
   
