@@ -56,6 +56,7 @@
     
     d <- readRDS(f) # Read it in
     m <- mask(d, eez_shp) # Mask it
+    crs(m) <- "EPSG:4326"
 
     df <- m %>% # Make it a df
       as.data.frame(xy = TRUE) %>% 
