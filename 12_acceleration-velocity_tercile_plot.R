@@ -18,6 +18,7 @@
   vocc_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts") 
   accel_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
   plot_fol <- make_folder(source_disk, "8_tercile_aus_plot", "spatial") # Aus files
+  pdf_fol <- make_folder(source_disk, "8_tercile_aus_plot", "spatial/pdfs") # Aus files
   
   
   
@@ -79,9 +80,10 @@
   
 # Plot -------------------------------------------------------------------------
   
+  term_order <- c("near", "mid", "intermediate", "long")
   combos <- expand_grid(ssp = ssp_list, term = term_list[2:5])  # adjust indices as needed
   combos
-  # ssp = "ssp245"
+  ssp = "ssp245"
   
   plot_bivariate <- function(ssp, pal_name) {
  
@@ -97,9 +99,8 @@
       })
     
       make_map <- function(df, ssp, term) {
-        ggplot() + 
-          geom_raster(df, 
-                      aes(x, y, 
+        ggplot(data = df) + 
+          geom_raster(aes(x, y, 
                           fill = code)) +
           scale_fill_manual(values = bivar_pal, drop = FALSE, guide = "none") +
           geom_sf(data = eez_shp, fill = NA, 
@@ -174,8 +175,11 @@
         theme(plot.margin = margin(10, 10, 10, 10))
    
       o_nm <- paste0(plot_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, ".png")
-      ggsave(filename = o_nm, plot = fig, width = 12, height = 20#, device = cairo_pdf
-             )
+      ggsave(filename = o_nm, plot = fig, width = 12, height = 20)
+      
+      o_nm_pdf <- paste0(pdf_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, ".pdf")
+      ggsave(filename = o_nm_pdf, plot = fig, width = 12, height = 20)
+      
       message("Saved: ", basename(o_nm))
   }
  
@@ -185,8 +189,31 @@
   # First digit = velocity tercile (1 = slow, 3 = fast)
   # Second digit = acceleration tercile (1 = low, 3 = high)
  
+  # ## tealochre
+  #   bivar_pal <- c("11"="#F8F0D0","12"="#E8B830","13"="#A07800",
+  #                  "21"="#60C8D0","22"="#789080","23"="#604800",
+  #                  "31"="#004858","32"="#003038","33"="#001810")
+  #   corner_pal <- c("Slow vel, low acc" ="#F8F0D0",
+  #                   "Slow vel, high acc"="#A07800",
+  #                   "Fast vel, low acc" ="#004858",
+  #                   "Fast vel, high acc"="#001810")
+  #   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre"))
+  
+  
+  ## tealochre1
+    ##**THIS ONE**
+    bivar_pal <- c("11"="#F8F4E4","12"="#F0C050","13"="#DA9500",
+                   "21"="#60C8D0","22"="#789080","23"="#513700",
+                   "31"="#008089","32"="#003F5A","33"="#001911")
+    corner_pal <- c("Slow vel, low acc" ="#F8F4E4",
+                    "Slow vel, high acc"="#DA9500",
+                    "Fast vel, low acc" ="#008089",
+                    "Fast vel, high acc"="#001911")
+    walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre1"))
+  
+  
   ## tealcoral
-    bivar_pal <- c("11" = "#f2f2f2", "12" = "#f0b89a", "13" = "#d4522a",
+    bivar_pal <- c("11" = "#f2f2f2", "12" = "#f0b89a", "13" = "#d4522a", # #f0b89a
                    "21" = "#7abfbf", "22" = "#9a9a8a", "23" = "#8a3a2a",
                    "31" = "#0a4a4a", "32" = "#3a3a3a", "33" = "#6a0a0a")
     
@@ -209,7 +236,6 @@
   
   
   ## ambernavy1
-    ##**THIS ONE**
     bivar_pal <- c("11"="#E9E9D8","12"="#F0C050","13"="#D66305",
                    "21"="#79B9BF","22"="#6A7C82","23"="#5D3636",
                    "31"="#095B7F","32"="#223153","33"="#0A1808")
@@ -220,22 +246,9 @@
     walk(ssp_list, ~ plot_bivariate(.x, pal_name = "ambernavy1"))
   
   
-  ## tealochre
-    bivar_pal <- c("11"="#F8F0D0","12"="#E8B830","13"="#A07800",
-                   "21"="#60C8D0","22"="#789080","23"="#604800",
-                   "31"="#004858","32"="#003038","33"="#001810")
-    corner_pal <- c("Slow vel, low acc" ="#F8F0D0",
-                    "Slow vel, high acc"="#A07800",
-                    "Fast vel, low acc" ="#004858",
-                    "Fast vel, high acc"="#001810")
-    walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre"))
   
   
   
-  
-  
-  ## Old palettes -------
-  # ## electricsaffron
   # bivar_pal <- c("11"="#FFFACC","12"="#FFD000","13"="#C06000",
   #                "21"="#50A8FF","22"="#6080A0","23"="#804000",
   #                "31"="#001880","32"="#001050","33"="#100800")

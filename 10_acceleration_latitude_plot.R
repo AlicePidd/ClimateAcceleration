@@ -165,58 +165,58 @@
   
   
   
-# Get median acceleration (slope) per 1° latitude ------------------------------
-
-  files <- dir(acc_fol, full.names = TRUE, pattern = ".RDS") #%>% # Hast to be rasts
-    # str_subset(., "historical", negate = TRUE)
-  files
-  f <- files[2]
-  f
-
-  slope_lat <- function(f) {
-    
-    r <- readRDS(f)
-    
-    # Get lat for each cell
-    lat_df <- crds(r, df = TRUE, na.rm = FALSE) %>% # Keep NAs so same number of cols
-      as_tibble() %>% # don't want a df
-      mutate(lat_band = ceiling(y)) # Round up to 1° band (cus we're in negatives)
-    
-    # Get values for all layers, pivot and summarise
-    vals <- values(r, dataframe = TRUE) %>% 
-      as_tibble() %>% 
-      bind_cols(lat_df) %>% 
-      pivot_longer(cols = -c(x, y, lat_band), 
-                   names_to = "layer", 
-                   values_to = "slope") %>% 
-      group_by(lat_band, layer) %>% 
-      summarise(median_slope = median(slope, na.rm = TRUE), 
-                .groups = "drop") %>% 
-      mutate(ssp = str_split_i(layer, "_", 3),
-             esm = str_split_i(layer, "_", 4),
-             term = str_split_i(layer, "_", 5)) %>% 
-      dplyr::select(lat = lat_band, median_slope, ssp, term, esm)
-    
-    return(vals)
-  }
-  
-  out <- map(files, slope_lat) %>% 
-    bind_rows %>% 
-    mutate(term = if_else(term == "historical", "recent", term)) %>% 
-    { bind_rows( # ChatGPT helped to duplicate the recent term for each SSP
-      filter(., ssp != "OISST"),
-      expand_grid(ssp = c("ssp126", "ssp245", "ssp370", "ssp585"),
-                  filter(., ssp == "OISST") %>% 
-                    dplyr::select(-ssp))
-      )}
-  out
-  out %>% distinct(ssp, term, esm) %>% count(ssp, term)
-  
-  out %>% 
-    filter(!is.na(median_slope)) %>% 
-    summarise(lat_min = min(lat), lat_max = max(lat), n = n())
-  
-  out %>% filter(lat == -25, term == "mid", ssp == "ssp245")
-  
-  
-  
+# # Get median acceleration (slope) per 1° latitude ------------------------------
+# 
+#   files <- dir(acc_fol, full.names = TRUE, pattern = ".RDS") #%>% # Hast to be rasts
+#     # str_subset(., "historical", negate = TRUE)
+#   files
+#   f <- files[2]
+#   f
+# 
+#   slope_lat <- function(f) {
+#     
+#     r <- readRDS(f)
+#     
+#     # Get lat for each cell
+#     lat_df <- crds(r, df = TRUE, na.rm = FALSE) %>% # Keep NAs so same number of cols
+#       as_tibble() %>% # don't want a df
+#       mutate(lat_band = ceiling(y)) # Round up to 1° band (cus we're in negatives)
+#     
+#     # Get values for all layers, pivot and summarise
+#     vals <- values(r, dataframe = TRUE) %>% 
+#       as_tibble() %>% 
+#       bind_cols(lat_df) %>% 
+#       pivot_longer(cols = -c(x, y, lat_band), 
+#                    names_to = "layer", 
+#                    values_to = "slope") %>% 
+#       group_by(lat_band, layer) %>% 
+#       summarise(median_slope = median(slope, na.rm = TRUE), 
+#                 .groups = "drop") %>% 
+#       mutate(ssp = str_split_i(layer, "_", 3),
+#              esm = str_split_i(layer, "_", 4),
+#              term = str_split_i(layer, "_", 5)) %>% 
+#       dplyr::select(lat = lat_band, median_slope, ssp, term, esm)
+#     
+#     return(vals)
+#   }
+#   
+#   out <- map(files, slope_lat) %>% 
+#     bind_rows %>% 
+#     mutate(term = if_else(term == "historical", "recent", term)) %>% 
+#     { bind_rows( # ChatGPT helped to duplicate the recent term for each SSP
+#       filter(., ssp != "OISST"),
+#       expand_grid(ssp = c("ssp126", "ssp245", "ssp370", "ssp585"),
+#                   filter(., ssp == "OISST") %>% 
+#                     dplyr::select(-ssp))
+#       )}
+#   out
+#   out %>% distinct(ssp, term, esm) %>% count(ssp, term)
+#   
+#   out %>% 
+#     filter(!is.na(median_slope)) %>% 
+#     summarise(lat_min = min(lat), lat_max = max(lat), n = n())
+#   
+#   out %>% filter(lat == -25, term == "mid", ssp == "ssp245")
+#   
+#   
+#   
