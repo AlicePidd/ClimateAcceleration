@@ -81,6 +81,7 @@
 
   
   plot_df <- df_comb %>%
+    mutate(cat = factor(cat, levels = c("north", "mid", "south"))) %>%
     group_by(year, cat, ssp, term) %>%
     summarise(
       med_velocity = median(velocity, na.rm = TRUE),
@@ -98,8 +99,20 @@
                 alpha = 0.2, colour = NA) +
     geom_line() +
     facet_grid(~cat) +
-    labs(y = "Median decadal velocity (km/yr)", x = "Year") +
-    theme_bw()
+    labs(y = "Median decadal velocity (km/decade)", x = "Year") +
+    theme_classic()
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
