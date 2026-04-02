@@ -15,14 +15,12 @@
 # Folders ----------------------------------------------------------------------
 
   vocc_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") # Use the rasts so can crop them
-  # vocc_df_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs")
-  vocc_rast_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts") # Use the rasts so can crop them
   plot_fol <- make_folder(source_disk, "6_velocity_aus_plot", "timeseries")
 
   
-  files <- dir(vocc_fol, full.names = TRUE) %>% 
+  esm_files <- dir(vocc_fol, full.names = TRUE) %>% 
     str_subset(., pattern = "historical", negate = TRUE)
-  files
+  esm_files
   hist_files <- dir(vocc_fol, full.names = TRUE, pattern = "historical")
   hist_files
 
@@ -31,7 +29,7 @@
   
 # Get the extent into thirds to split into 3 regions ---------------------------
   
-  f <- files[7]
+  f <- esm_files[7]
   d <- readRDS(f) # Can use any file
   ext(d) # SpatExtent : 105, 175, -50, -5 (xmin, xmax, ymin, ymax)
   
@@ -41,7 +39,7 @@
     #       -35       -20 
 
   
-  
+
   
 # Get rasters cropped and in df format -----------------------------------------
   
@@ -58,30 +56,55 @@
     m <- mask(d, eez_shp) # Mask it
     crs(m) <- "EPSG:4326"
 
-    df <- m %>% # Make it a df
-      as.data.frame(xy = TRUE) %>% 
-      as_tibble() %>% 
-      mutate(lon = x, 
-             lat = y,
-             med_velocity = .[[3]],
-             ssp = ssp, 
-             esm = esm,
-             term = term) %>% 
-      dplyr::select(-c(1:3)) 
-      
-    cat_df <- df %>% 
-      mutate(cat = case_when(lat <= q[[1]] ~ "south",
-                             lat > q[[1]] & lat <= q[[2]] ~ "mid",
-                             lat > q[[2]] ~ "north"))
+    cat_df <- m %>%
+      as.data.frame(xy = TRUE) %>%
+      as_tibble() %>%
+      pivot_longer(cols = -c(x, y), # Multilayer files so need to pivot 
+                   names_to = "year",
+                   values_to = "velocity") %>%
+      mutate(year = str_split_i(year, "_", 1) %>% as.numeric(),
+             ssp  = ssp,
+             term = term,
+             esm  = esm,
+             cat  = case_when(y <= q[[1]] ~ "south",
+                              y > q[[1]] & y <= q[[2]] ~ "mid",
+                              y > q[[2]] ~ "north"))
+    
     return(cat_df)
   }
   
-  df_comb <- map(files, do_mask_df) %>% 
+  df_comb <- map(esm_files, do_mask_df) %>%
     bind_rows()
   df_comb
   
   
 
+  
+  plot_df <- df_comb %>%
+    group_by(year, cat, ssp, term) %>%
+    summarise(
+      med_velocity = median(velocity, na.rm = TRUE),
+      lo_velocity  = quantile(velocity, 0.1, na.rm = TRUE),
+      hi_velocity  = quantile(velocity, 0.9, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  ggplot(plot_df, 
+         aes(x = year, 
+             y = med_velocity, 
+             colour = ssp, fill = ssp)) +
+    geom_ribbon(aes(ymin = lo_velocity, 
+                    ymax = hi_velocity), 
+                alpha = 0.2, colour = NA) +
+    geom_line() +
+    facet_grid(~cat) +
+    labs(y = "Median decadal velocity (km/yr)", x = "Year") +
+    theme_bw()
+  
+  
+  
+  
+  
   
 # Get median velocity and min/max medians per cat ------------------------------
   
