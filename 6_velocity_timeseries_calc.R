@@ -30,8 +30,8 @@
 # Get median velocity per year and SSP, across all ESMs ------------------------
   
   files <- esm_files
-  # ssp <- "ssp245"
-  # term <- "intermediate"
+  ssp <- "ssp245"
+  term <- "intermediate"
   
   get_median_timeseries <- function(files, ssp, term) {
     
