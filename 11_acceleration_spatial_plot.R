@@ -95,7 +95,7 @@
     
 # Palettes ---------------------------------------------------------------------
   
-  pal_div_RdBu <- rev(RColorBrewer::brewer.pal(11, "RdBu"))
+  # pal_div_RdBu <- rev(RColorBrewer::brewer.pal(11, "RdBu"))
   pal_div_heat <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#F7FBFF", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
   # pal_div_RdBualt <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
   # pal_div_BrBG <- rev(RColorBrewer::brewer.pal(11, "BrBG"))
@@ -129,12 +129,13 @@
           #         25%       75% 
           #   -1.4625752  0.7817445 
       
-      future_lims <- round(max(abs(q25q75)), digits = 1)  # ~1.46 so will go with ± 1.5 around 0
+      future_lims <- round(max(abs(q25q75)), digits = 1)  # ~1.46 so would go with ± 1.5 around 0
       future_lims
       
   
     ### 5th-9th percentile lims -------
-      q5q95 <- quantile(all_df$median_accel, c(0.05, 0.95), na.rm = TRUE)
+      ##**This one**
+      q5q95 <- quantile(future_df$median_accel, c(0.05, 0.95), na.rm = TRUE)
       q5q95
         # No Historical
           #          5%       95% 
@@ -174,7 +175,7 @@
                                                   title.hjust    = 0.5,
                                                   direction = "horizontal")) +
       geom_sf(data = eez_shp, fill = NA, colour = "black", linewidth = 0.3) +
-      geom_sf(data = oceania_stanford_shp, fill = "grey70", colour = NA) +
+      geom_sf(data = oceania_stanford_shp, fill = "grey80", colour = NA) +
       coord_sf(expand = FALSE, xlim = c(105, 180), ylim = c(-50, -5)) +
       facet_wrap(~ term, ncol = 1) +
       labs(title = paste0("Median decadal acceleration -- ", ssp)) +
@@ -182,45 +183,53 @@
       theme(legend.position = "bottom",
             legend.title    = element_text(size = 8),
             legend.text     = element_text(size = 7),
-            plot.subtitle   = element_text(size = 9, colour = "grey30"))
+            plot.subtitle   = element_text(size = 9, colour = "grey30"),
+            panel.background = element_rect(fill = "transparent", colour = NA),
+            plot.background = element_rect(fill = "transparent", colour = NA),
+            legend.background = element_rect(fill = "transparent"),
+            legend.box.background = element_rect(fill = "transparent")
+            )
     
     o_nm <- paste0(plot_fol, "/spatial_median_acceleration_decadal_", ssp, 
-                   "_pal-", pal_name, "_", lim_method, "_lims", lims, ".png")
-    ggsave(filename = o_nm, plot = p, width = 8, height = 20, dpi = 600)
+                   "_pal-", pal_name, "_", lim_method, "_lims", lims)
+    ggsave(filename = paste0(o_nm, ".png"), plot = p, width = 8, height = 20, dpi = 600, bg = "transparent")
+    ggsave(filename = paste0(o_nm, ".pdf"), plot = p, width = 8, height = 20, dpi = 600)
+    
   }
       
-  # Heat div palette
+  ## Heat div palette -----------------
     walk(ssp_list, ~ plot_accel_future(.x, future_files, 
                                     lims = 5.5, lim_method = "Q5-Q95",
                                     pal = pal_div_heat, pal_name = "div_heat"))
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                       lims = 1.5, lim_method = "IQR",
-                                       pal = pal_div_heat, pal_name = "div_heat"))
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                    lims = 25, lim_method = "arbitrary",
-                                    pal = pal_div_heat, pal_name = "div_heat"))
+    # walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                    lims = 1.5, lim_method = "IQR",
+    #                                    pal = pal_div_heat, pal_name = "div_heat"))
+    # walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                 lims = 25, lim_method = "arbitrary",
+    #                                 pal = pal_div_heat, pal_name = "div_heat"))
     
-  # RdBu div palette
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                    lims = 5.5, lim_method = "Q5-Q95",
-                                    pal = pal_div_RdBu, pal_name = "div_RdBu"))
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                       lims = 1.5, lim_method = "IQR",
-                                       pal = pal_div_RdBu, pal_name = "div_RdBu"))
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                    lims = 25, lim_method = "arbitrary",
-                                    pal = pal_div_RdBu, pal_name = "div_RdBu"))
-  
-  # Coco div palette
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                    lims = 5.5, lim_method = "Q5-Q95",
-                                    pal = pal_div_coco, pal_name = "div_coco"))
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                       lims = 1.5, lim_method = "IQR",
-                                       pal = pal_div_RdBu, pal_name = "div_RdBu"))
-    walk(ssp_list, ~ plot_accel_future(.x, future_files, 
-                                    lims = 25, lim_method = "arbitrary",
-                                    pal = pal_div_coco, pal_name = "div_coco"))
+  ## Other palettes -----------------
+    # # RdBu div palette
+    #   walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                   lims = 5.5, lim_method = "Q5-Q95",
+    #                                   pal = pal_div_RdBu, pal_name = "div_RdBu"))
+    #   walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                      lims = 1.5, lim_method = "IQR",
+    #                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
+    #   walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                   lims = 25, lim_method = "arbitrary",
+    #                                   pal = pal_div_RdBu, pal_name = "div_RdBu"))
+    # 
+    # # Coco div palette
+    #   walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                   lims = 5.5, lim_method = "Q5-Q95",
+    #                                   pal = pal_div_coco, pal_name = "div_coco"))
+    #   walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                      lims = 1.5, lim_method = "IQR",
+    #                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
+    #   walk(ssp_list, ~ plot_accel_future(.x, future_files, 
+    #                                   lims = 25, lim_method = "arbitrary",
+    #                                   pal = pal_div_coco, pal_name = "div_coco"))
       
       
       

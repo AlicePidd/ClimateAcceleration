@@ -123,6 +123,8 @@
   
   
   
+  
+  
 # Plot timeseries --------------------------------------------------------------
   
   p <- ggplot() +
@@ -157,7 +159,7 @@
   
   
   
-# Plot an Oceania with graticules ----------------------------------------------
+# Plot an Oceania with region lines for the figure -----------------------------
 
   ## Make hlines at the latitude splits ------------
     lonmin <- ext(oceania_stanford_shp)[1]
@@ -169,7 +171,7 @@
                                   ncol = 2, byrow = TRUE))
     line1_sf <- st_sfc(line1, crs = 4326)
     
-    line2 <- st_linestring(matrix(c(lonmin, target_lat2, lonmax, target_lat2),
+    line2 <- st_linestring(matrix(c(lonmin, target_lat2, lonmax, target_lat2), 
                                   ncol = 2, byrow = TRUE))
     line2_sf <- st_sfc(line2, crs = 4326)
   
