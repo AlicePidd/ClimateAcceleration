@@ -200,7 +200,7 @@
   
   
   
-  # ## Cut EEZ to be at each region -----------
+  # ## Cut EEZ to be at each region for the figure (didn't end up using this, bit of tomfoolery I couldn't be bothered to fix) -----------
   #   bb <- st_bbox(eez_shp)
   #   
   #   # helper to build a band
