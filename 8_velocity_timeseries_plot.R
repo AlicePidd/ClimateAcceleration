@@ -20,17 +20,11 @@
   fig_fol <- make_folder(source_disk, "_figures", "")
   
 
-  all_files <- dir(vocc_fol, full.names = TRUE)
-  # esm_files <- dir(vocc_fol, full.names = TRUE) %>% 
-  #   str_subset(., pattern = "historical", negate = TRUE)
-  # esm_files
-  # hist_files <- dir(vocc_fol, full.names = TRUE, pattern = "historical")
-  # hist_files
-
-  
   
   
 # Get the extent into thirds to split into 3 regions ---------------------------
+  
+  all_files <- dir(vocc_fol, full.names = TRUE)
   
   f <- all_files[2]
   d <- readRDS(f) # Can use any file
@@ -114,7 +108,7 @@
   
   
 
-  ## Maybe should weight it by number of grid cells (rows?) in each cat, if they are very different?
+  ## *Maybe* should weight it by number of grid cells (rows?) in each cat, if they are very different?
   df_comb %>%
     distinct(x, y, cat) %>%
     count(cat)
@@ -125,6 +119,7 @@
   #   2 north  3604
   #   3 south  3201
   
+  ## Ehh. I'll just state it on the figure for now.
   
   
   
