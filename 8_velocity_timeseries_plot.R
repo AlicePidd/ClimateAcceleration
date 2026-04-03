@@ -15,21 +15,22 @@
 # Folders ----------------------------------------------------------------------
 
   vocc_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") # Use the rasts so can crop them
+  df_fol <- make_folder(source_disk, "3_velocity_decadal_median_timeseries", "dfs") # Use the rasts so can crop them
   plot_fol <- make_folder(source_disk, "6_velocity_aus_plot", "timeseries")
 
-  
-  esm_files <- dir(vocc_fol, full.names = TRUE) %>% 
-    str_subset(., pattern = "historical", negate = TRUE)
-  esm_files
-  hist_files <- dir(vocc_fol, full.names = TRUE, pattern = "historical")
-  hist_files
+  all_files <- dir(vocc_fol, full.names = TRUE)
+  # esm_files <- dir(vocc_fol, full.names = TRUE) %>% 
+  #   str_subset(., pattern = "historical", negate = TRUE)
+  # esm_files
+  # hist_files <- dir(vocc_fol, full.names = TRUE, pattern = "historical")
+  # hist_files
 
   
   
   
 # Get the extent into thirds to split into 3 regions ---------------------------
   
-  f <- esm_files[7]
+  f <- all_files[2]
   d <- readRDS(f) # Can use any file
   ext(d) # SpatExtent : 105, 175, -50, -5 (xmin, xmax, ymin, ymax)
   
@@ -37,9 +38,13 @@
   q 
     # 33.33333% 66.66667% 
     #       -35       -20 
-
+  ## Roughly splitting data into regions based on these lats
+    # North: -5 to -20
+    # Mid: -20 to -35
+    # South: -35 to -50
   
-
+  
+  
   
 # Get rasters cropped and in df format -----------------------------------------
   
@@ -73,12 +78,26 @@
     return(cat_df)
   }
   
-  df_comb <- map(esm_files, do_mask_df) %>%
+  df_comb <- map(all_files, do_mask_df) %>%
     bind_rows()
   df_comb
+  saveRDS(df_comb, file = paste0(df_fol, "/velocity_decadal_timeseries-median_df_combined_ssp-esm-term.RDS"))
+  
   
   
 
+# Create plotting df -----------------------------------------------------------
+  
+  df_comb <- readRDS(paste0(df_fol, "/velocity_decadal_timeseries-median_df_combined_ssp-esm-term.RDS"))
+  
+  df_projected <- readRDS(paste0(df_fol, "/velocity_decadal_timeseries-median_df_combined_ssp-esm-term.RDS")) %>% 
+    filter(ssp != "historical")
+  df_projected
+  
+  df_historical <- readRDS(paste0(df_fol, "/velocity_decadal_timeseries-median_df_combined_ssp-esm-term.RDS")) %>% 
+    filter(ssp == "historical")
+  df_historical
+  
   
   plot_df <- df_comb %>%
     mutate(cat = factor(cat, levels = c("north", "mid", "south"))) %>%
@@ -90,49 +109,6 @@
       .groups = "drop"
     )
   
-  ggplot(plot_df, 
-         aes(x = year, 
-             y = med_velocity, 
-             colour = ssp, fill = ssp)) +
-    geom_ribbon(aes(ymin = lo_velocity, 
-                    ymax = hi_velocity), 
-                alpha = 0.2, colour = NA) +
-    geom_line() +
-    facet_grid(~cat) +
-    labs(y = "Median decadal velocity (km/decade)", x = "Year") +
-    theme_classic()
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-# Get median velocity and min/max medians per cat ------------------------------
-  
-  df_cat <- df_comb %>% 
-    group_by(ssp, term, cat) %>% 
-    summarise(med_cat = median(med_velocity),
-              min_cat = min(med_velocity),
-              max_cat = max(med_velocity))
-  
-  
-  
-  
-  
-  
-# Plot -------------------------------------------------------------------------
   
   ssp_cols <- c(#"historical" = "#5F5E5A",
     "ssp126" = col_ssp126,
@@ -141,61 +117,49 @@
     "ssp585" = col_ssp585)
   
   
-  
-  
 
-  esm_ribbon <- esm_meds %>%
-    filter(ssp != "historical") %>%
-    group_by(lat, ssp, term) %>%
-    summarise(
-      lo_5 = quantile(esm_med, 0.05, na.rm = TRUE),
-      hi_95 = quantile(esm_med, 0.95, na.rm = TRUE),
-      lo_25 = quantile(esm_med, 0.25, na.rm = TRUE),
-      hi_75 = quantile(esm_med, 0.75, na.rm = TRUE),
-      .groups = "drop"
-    )
-  esm_ribbon
+  ## Maybe should weight it by number of grid cells (rows?) in each cat, if they are very different?
+  df_comb %>%
+    distinct(x, y, cat) %>%
+    count(cat)
+  # # A tibble: 3 × 2
+  #     cat       n
+  #     <chr> <int>
+  #   1 mid    4640
+  #   2 north  3604
+  #   3 south  3201
   
-  max(esm_ribbon$hi_95)
   
+  
+  
+# Plot -------------------------------------------------------------------------
   
   p <- ggplot() +
-    # geom_ribbon(data = esm_ribbon,
-    #             aes(x = lat,
-    #                 ymin = lo_5, ymax = hi_95,
-    #                 fill = ssp),
-    #             alpha = 0.10, colour = NA) +
-    geom_ribbon(data = esm_ribbon,
-                aes(x = lat, ymin = lo_25, ymax = hi_75, fill = ssp),
-                alpha = 0.2, colour = NA) +
-    geom_line(data = future_med,
-              aes(x = lat, y = med, 
+    geom_ribbon(data = plot_df %>% filter(term == "recent"),
+                aes(x = year, ymin = lo_velocity, ymax = hi_velocity),
+                alpha = 0.1, colour = NA) +
+    geom_line(data = plot_df %>% filter(term == "recent"),
+              aes(x = year, y = med_velocity),
+              colour = "grey40", lwd = 0.8) +
+    geom_ribbon(data = plot_df %>% filter(term != "recent"),
+                aes(x = year, ymin = lo_velocity, ymax = hi_velocity, fill = ssp),
+                alpha = 0.1, colour = NA) +
+    geom_line(data = plot_df %>% filter(term != "recent"),
+              aes(x = year, 
+                  y = med_velocity, 
                   colour = ssp),
-              linewidth = 0.5) +
-    geom_line(data = hist_line,
-              aes(x = lat, y = med),
-              colour = "grey20", linewidth = 0.5, linetype = "dashed") +
-    geom_hline(yintercept = 0, colour = "grey30", linewidth = 0.3, linetype = "dotted") +
-    scale_x_continuous(breaks = seq(-50, -5, by = 10),
-                       labels = function(x) paste0(abs(x), "°S")) +
-    coord_flip() +
-    facet_wrap(~ term, nrow = 1) +
+              lwd = 0.7) +
+    geom_hline(yintercept = 0, linetype = "dashed", lwd = 0.5, col = "grey50", alpha = 0.6) +
     scale_colour_manual(values = ssp_cols, name = NULL) +
     scale_fill_manual(values = ssp_cols, name = NULL) +
-    labs(x = "Latitude",
-         y = expression("Decadal acceleration (km decade"^{-2}*")")) +
-    theme_linedraw(base_size = 10) +
-    theme(#title = "",
-      strip.background = element_blank(),
-      strip.text = element_text(face = "bold"),
-      legend.position = "bottom",
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank(),
-      panel.spacing = unit(4, "pt"))
-  
+    facet_wrap(~cat, ncol = 1) +
+    labs(y = "Median climate velocity (km/decade)", x = "Year") +
+    theme_classic(base_size = 10)
   p
-  o_nm <- paste0(plot_fol, "/median_IQR_acceleration_across_ESMs_latitude_ssp-term.pdf") 
-  ggsave(filename = o_nm, plot = p, height = 6, width = 6, dpi = 300)
   
+  ggsave(p, file = paste0(plot_fol, "/velocity_decadal_timeseries-median_north-mid-south_ssp.pdf"),
+         width = 6, height = 10, dpi = 300)
+  ggsave(p, file = paste0(plot_fol, "/velocity_decadal_timeseries-median_north-mid-south_ssp.png"),
+         width = 6, height = 10, dpi = 300)
   
   
