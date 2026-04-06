@@ -31,21 +31,7 @@
   
   raw_dat <- map(files, function(f) {
     r <- readRDS(f)
-    
-    # vals <- values(r, dataframe = TRUE) %>%
-    #   as_tibble() %>%
-    #   bind_cols(crds(r, df = TRUE, na.rm = FALSE) %>% 
-    #               as_tibble()) %>%
-    #   pivot_longer(cols = -c(x, y), names_to = "layer", values_to = "accel") %>%
-    #   mutate(
-    #     ssp  = str_split_i(layer, "_", 3),
-    #     esm  = str_split_i(layer, "_", 4),
-    #     term = str_split_i(layer, "_", 5)
-    #   ) %>%
-    #   dplyr::select(lat = y, accel, ssp, esm, term)
-    # 
-    # return(vals)
-    
+
     vals <- values(r, dataframe = TRUE) %>%
       as_tibble() %>%
       bind_cols(crds(r, df = TRUE, na.rm = FALSE) %>% 
@@ -104,7 +90,7 @@
       max = max(med_lat_accel, na.rm = TRUE),
       .groups = "drop")
 
-  range(all_med$med)
+  range(all_med$med) # [1] -12.140479   7.964705
   
   esm_range <- raw_dat %>%
     filter(ssp != "historical") %>% 
@@ -140,17 +126,9 @@
   
 
   p <- ggplot() +
-      # geom_ribbon(data = esm_ribbon,
-      #             aes(x = lat,
-      #                 ymin = lo_5, ymax = hi_95,
-      #                 fill = ssp),
-      #             alpha = 0.10, colour = NA) +
       geom_ribbon(data = esm_range,
                   aes(x = lat_cat, ymin = lo_25, ymax = hi_75, fill = ssp), # IQR
                   alpha = 0.2, colour = NA) +
-      # geom_ribbon(data = esm_range,
-      #           aes(x = lat_cat, ymin = lo_5, ymax = hi_95, fill = ssp), # 5-95th percentiles
-      #           alpha = 0.2, colour = NA) +
       geom_line(data = future_med,
                 aes(x = lat_cat, y = med, 
                   colour = ssp),
@@ -165,11 +143,11 @@
       facet_wrap(~ term, nrow = 1) +
       scale_colour_manual(values = ssp_cols, name = NULL) +
       scale_fill_manual(values = ssp_cols, name = NULL) +
-      labs(x = "Latitude",
+      labs(title = "Inter-model spread of acceleration by latitude",
+           x = "Latitude",
            y = expression("Climate acceleration (km decade"^{-2}*")")) +
       theme_linedraw(base_size = 10) +
-      theme(#title = "",
-            strip.background = element_blank(),
+      theme(strip.background = element_blank(),
             strip.text = element_text(face = "bold"),
             legend.position = "bottom",
             panel.grid.major = element_blank(),
