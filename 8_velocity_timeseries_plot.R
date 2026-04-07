@@ -108,7 +108,7 @@
   
   
 
-  ## *Maybe* should weight it by number of grid cells (rows?) in each cat, if they are very different?
+  ## *Maybe* should weight it by number of grid cells (rows?) in each cat, if they are very different? -----------
   df_comb %>%
     distinct(x, y, cat) %>%
     count(cat)
@@ -122,7 +122,55 @@
   ## Ehh. I'll just state it on the figure for now.
   
   
+  ## Getting stats for quoting in result text -----------
   
+  # min and max ribbon and line values at 2090
+    plot_df %>%  
+      filter(year == 2090) %>% 
+      group_by(ssp) %>% 
+      summarise(min_ribbon = min(lo_velocity),
+                max_ribbon = max(hi_velocity),
+                min_median = min(med_velocity),
+                max_median = max(med_velocity)) %>% 
+      mutate(year = 2090) 
+  
+  # Same for the historical period
+    plot_df %>% 
+      group_by(ssp) %>% 
+      filter(ssp == "historical") %>% 
+      summarise(min_ribbon = min(lo_velocity),
+                max_ribbon = max(hi_velocity),
+                min_median = min(med_velocity),
+                max_median = max(med_velocity)) 
+  
+  # Across the whole timeseries, min/max values
+    plot_df %>% 
+      group_by(ssp) %>% 
+      summarise(min_ribbon = min(lo_velocity),
+                max_ribbon = max(hi_velocity),
+                min_median = min(med_velocity),
+                max_median = max(med_velocity)) %>% 
+      mutate(year = "whole_timeseries")
+
+    
+  # By region (high, mid, low latitudes)
+    plot_df %>% 
+      group_by(cat, ssp) %>% 
+      summarise(min_ribbon = min(lo_velocity),
+                max_ribbon = max(hi_velocity),
+                min_median = min(med_velocity),
+                max_median = max(med_velocity)) %>% 
+      mutate(filter = "lat_region")
+    
+  # By region (high, mid, low latitudes) + only the final year
+    plot_df %>% 
+      filter(year == 2090) %>% 
+      group_by(cat, ssp) %>% 
+      summarise(min_ribbon = min(lo_velocity),
+                max_ribbon = max(hi_velocity),
+                min_median = min(med_velocity),
+                max_median = max(med_velocity)) %>% 
+      mutate(filter = "lat_region")
   
   
 # Plot timeseries --------------------------------------------------------------

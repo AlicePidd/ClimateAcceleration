@@ -18,9 +18,11 @@
   # vocc_term_yr_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "annual")
   vocc_term_dec_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") # Yearly climate velocity (km/year)
   esm_fol <- make_folder(source_disk, "3_velocity_decadal_ESMs_terms", "dfs")
-  median_df_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs") 
-  median_rast_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts") 
-
+  median_df_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs/uncropped") 
+  median_rast_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts/uncropped") 
+  median_df_crop_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs/cropped") 
+  median_rast_crop_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts/cropped") 
+  
 
     
 # Get the median climate velocity across all ESMs together, per SSP-term combo -------------

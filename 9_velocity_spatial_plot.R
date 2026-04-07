@@ -26,6 +26,8 @@
   f <- files[2]
   f
 
+  d <- readRDS(f)
+
   
   
   
