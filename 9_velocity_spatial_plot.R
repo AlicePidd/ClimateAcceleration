@@ -2,7 +2,7 @@
   # Written by Alice P
     # 7 March 2026
 
-# Climate velocity in each grid cell - median across ESMs, per SSP and term
+# Climate velocity in each grid cell - median of all ESMs, per SSP and term
 
   
 
@@ -16,68 +16,52 @@
   
 # Folders ----------------------------------------------------------------------
 
-  # vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "")
-  vocc_df_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs")
+  vocc_df_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs/cropped")
+  # vocc_rast_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts/cropped")
   plot_fol <- make_folder(source_disk, "6_velocity_aus_plot", "spatial")
 
   
   files <- dir(vocc_df_fol, full.names = TRUE)
   files
-  f <- files[2]
-  f
-
-  d <- readRDS(f)
+  # f <- files[2]
+  # f
+  # d <- readRDS(f)
 
   
   
   
 # Lists ------------------------------------------------------------------------
     
-  # ssp_cols <- c("historical" = "#5F5E5A",
-  #               "ssp126" = col_ssp126,
-  #               "ssp245" = col_ssp245,
-  #               "ssp370" = col_ssp370,
-  #               "ssp585" = col_ssp585)
   term_order <- term_list
   ssp_order <- ssp_list
   
   
   
   
-# Files ------------------------------------------------------------------------
-  
-  ## Load and bind all the median df files ------------
+# Load and bind all the median df files ----------------------------------------
   
   future_files <- dir(vocc_df_fol, full.names = TRUE, pattern = ".RDS") %>% 
     str_subset(., "historical", negate = TRUE) # Gotta keep these out so that it doesn't skew the quantiles
   future_files # Use for computing lims etc.
     
   
-  # ## Load and stack all the median rast files ------------
-  # 
-  #   rast_files <- dir(median_rast_fol, full.names = TRUE, pattern = ".RDS")
-  #   rast_files # Use for plotting
-  #   
-  #   all_r <- map(rast_files, ~{
-  #     readRDS(.x)[[1]]
-  #   }) %>%
-  #     rast()
-  #   all_r
-
-    
 
     
     
 # Palettes ---------------------------------------------------------------------
   
+  pal_div_heat <- colorRampPalette(c("#001219", "#005F73", "#0a9396", "#C9E7DD",
+                                     "#F7FBFF",
+                                     "#FFEDCB", "#ee9b00", "#ca6702", "#79080C"))(100) # As a colour ramp
+  # pal_div_heat <- c("#001219", "#005F73", "#0a9396", "#52b2a3", "#94d2bd", "#C9E7DD", "#F7FBFF", "#FFEDCB","#FFC672", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
+  
   pal_div_RdBu <- rev(RColorBrewer::brewer.pal(11, "RdBu"))
-  pal_div_heat <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#F7FBFF", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
+  
   # pal_div_RdBualt <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
   # pal_div_BrBG <- rev(RColorBrewer::brewer.pal(11, "BrBG"))
   # pal_div_BlOr <- c("#005F73", "#208f99", "#52c4cc", "#99faff", "#ccfeff", "#e6ffff", "#ffe6cc", "#ffad66", "#ff8f32", "#cc5801", "#994000") # Manual version
-  pal_div_coco <- rev(c("#881d00", "#af6125", "#f4e3c7", "#F7FBFF", "#1bb5af", "#0076bb", "#172869")) # Manual version
+  # pal_div_coco <- rev(c("#881d00", "#af6125", "#f4e3c7", "#F7FBFF", "#1bb5af", "#0076bb", "#172869")) # Manual version
   # pal_div_geyser <- c("#018080", "#70a494", "#b4c8a8", "#F7FBFF", "#edbb8a", "#de8a5a", "#ca562d") # Manual version
-    
 
   
   
@@ -93,28 +77,37 @@
     
     future_range <- range(future_df$median_velocity, na.rm = TRUE) # no historical: -408.2199 4669.6462
     future_range
+      # cropped, no historical: -408.2199 3565.2945
+      # uncropped, no historical: -408.2199 4669.6462
     
     ### IQR lims -------
       q25q75 <- quantile(future_df$median_velocity, c(0.25, 0.75), na.rm = TRUE)
       q25q75
-        # No Historical
+        # Cropped, No Historical
           #          25%       75% 
-          #     22.02140 94.98958 
+          #     24.75361  93.94179 
+      
+        # Uncropped, No Historical
+          #          25%       75% 
+          #     22.02140  94.98958 
 
-      future_lims <- round(max(abs(q25q75)), digits = 1)  # ~94.98958 so will go with ± 100 around 0
-      future_lims
+      q25q75_lims <- round(max(abs(q25q75)))  # ~94 so will go with ± 100 around 0
+      q25q75_lims
       
   
     ### 5th-9th percentile lims -------
       q5q95 <- quantile(future_df$median_velocity, c(0.05, 0.95), na.rm = TRUE)
       q5q95
-        # No Historical
+      # Cropped, No Historical
+        #           5%        95% 
+        #     1.004397 309.096234 
+      
+      # Uncropped, No Historical
           #          5%       95% 
           #     1.79268 361.06305  
 
-      future_lims <- round(max(abs(q5q95)))  # 361.0631, so will go with ± 360 around 0
-      future_lims
-      
+      q5q95_lims <- round(max(abs(q5q95)))  # 309
+      q5q95_lims
   
   
 
@@ -143,7 +136,7 @@
                                                   title.hjust    = 0.5,
                                                   direction = "horizontal")) +
       geom_sf(data = eez_shp, fill = NA, colour = "black", linewidth = 0.3) +
-      geom_sf(data = oceania_stanford_shp, fill = "grey70", colour = NA) +
+      geom_sf(data = oceania_stanford_shp, fill = "grey80", colour = NA) +
       coord_sf(expand = FALSE, xlim = c(105, 180), ylim = c(-50, -5)) +
       facet_wrap(~ term, ncol = 1) +
       labs(title = paste0("Median decadal velocity -- ", ssp)) +
@@ -153,43 +146,54 @@
             legend.text     = element_text(size = 7),
             plot.subtitle   = element_text(size = 9, colour = "grey30"))
     
-    o_nm <- paste0(plot_fol, "/spatial_median_velocity_decadal_", ssp, 
-                   "_pal-", pal_name, "_", lim_method, "_lims", lims, ".png")
-    ggsave(filename = o_nm, plot = p, width = 8, height = 20, dpi = 600)
+    # o_nm <- paste0(plot_fol, "/spatial_median_velocity_decadal_cropped_", ssp, 
+    #                "_pal-", pal_name, "_", lim_method, "_lims", lims, ".png")
+    # ggsave(filename = o_nm, plot = p, width = 8, height = 20, dpi = 600)
+    
+    o_nm <- paste0(plot_fol, "/spatial_median_velocity_decadal_cropped_", ssp, 
+                   "_pal-", pal_name, "_", lim_method, "_lims", lims)
+    ggsave(filename = paste0(o_nm, ".png"), plot = p, width = 8, height = 20, dpi = 600, bg = "transparent")
+    ggsave(filename = paste0(o_nm, ".pdf"), plot = p, width = 8, height = 20, dpi = 600)
+    
   }
+      
+  ## Setting limits    
+    q5q95_lims <- round(q5q95_lims, digits = -1) # Rounding to ± 310 around 0
+    IQR_lims <- round(q25q75_lims, digits = -2) # Rounding to 100
+
       
   # Heat div palette
     walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                    lims = 360, lim_method = "Q5-Q95",
+                                    lims = q5q95_lims, lim_method = "Q5-Q95",
                                     pal = pal_div_heat, pal_name = "div_heat"))
     walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                       lims = 100, lim_method = "IQR",
+                                       lims = IQR_lims, lim_method = "IQR",
                                        pal = pal_div_heat, pal_name = "div_heat"))
-    walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                    lims = 200, lim_method = "arbitrary",
-                                    pal = pal_div_heat, pal_name = "div_heat"))
+    # walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
+    #                                 lims = 200, lim_method = "arbitrary",
+    #                                 pal = pal_div_heat, pal_name = "div_heat"))
     
-  # RdBu div palette
-    walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                    lims = 360, lim_method = "Q5-Q95",
-                                    pal = pal_div_RdBu, pal_name = "div_RdBu"))
-    walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                       lims = 100, lim_method = "IQR",
-                                       pal = pal_div_RdBu, pal_name = "div_RdBu"))
-    walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                    lims = 200, lim_method = "arbitrary",
-                                    pal = pal_div_RdBu, pal_name = "div_RdBu"))
-  
-  # Coco div palette
-    walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                    lims = 360, lim_method = "Q5-Q95",
-                                    pal = pal_div_coco, pal_name = "div_coco"))
-    walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                       lims = 100, lim_method = "IQR",
-                                       pal = pal_div_RdBu, pal_name = "div_RdBu"))
-    walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-                                    lims = 200, lim_method = "arbitrary",
-                                    pal = pal_div_coco, pal_name = "div_coco"))
+  # # RdBu div palette
+  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
+  #                                   lims = q5q95_lims, lim_method = "Q5-Q95",
+  #                                   pal = pal_div_RdBu, pal_name = "div_RdBu"))
+  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
+  #                                      lims = IQR_lims, lim_method = "IQR",
+  #                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
+  #   # walk(ssp_list, ~ plot_velocity_future(.x, future_files,
+  #   #                                 lims = 200, lim_method = "arbitrary",
+  #   #                                 pal = pal_div_RdBu, pal_name = "div_RdBu"))
+  # 
+  # # Coco div palette
+  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
+  #                                   lims = q5q95_lims, lim_method = "Q5-Q95",
+  #                                   pal = pal_div_coco, pal_name = "div_coco"))
+  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
+  #                                      lims = q25q75_lims, lim_method = "IQR",
+  #                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
+  #   # walk(ssp_list, ~ plot_velocity_future(.x, future_files,
+  #   #                                 lims = 200, lim_method = "arbitrary",
+  #   #                                 pal = pal_div_coco, pal_name = "div_coco"))
       
       
       

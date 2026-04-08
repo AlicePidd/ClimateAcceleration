@@ -95,6 +95,11 @@
     
 # Palettes ---------------------------------------------------------------------
   
+  pal_div_heat <- colorRampPalette(c("#001219", "#005F73", "#0a9396", "#C9E7DD",
+                                     "#F7FBFF",
+                                     "#FFEDCB", "#ee9b00", "#ca6702", "#79080C"))(100) # As a colour ramp
+  
+  
   # pal_div_RdBu <- rev(RColorBrewer::brewer.pal(11, "RdBu"))
   pal_div_heat <- c("#001219", "#005F73", "#0a9396", "#94d2bd", "#F7FBFF", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
   # pal_div_RdBualt <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
@@ -190,7 +195,7 @@
             legend.box.background = element_rect(fill = "transparent")
             )
     
-    o_nm <- paste0(plot_fol, "/spatial_median_acceleration_decadal_", ssp, 
+    o_nm <- paste0(plot_fol, "/spatial_median_acceleration_decadal_cropped_", ssp, 
                    "_pal-", pal_name, "_", lim_method, "_lims", lims)
     ggsave(filename = paste0(o_nm, ".png"), plot = p, width = 8, height = 20, dpi = 600, bg = "transparent")
     ggsave(filename = paste0(o_nm, ".pdf"), plot = p, width = 8, height = 20, dpi = 600)

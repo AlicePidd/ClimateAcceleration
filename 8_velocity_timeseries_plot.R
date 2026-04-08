@@ -14,7 +14,7 @@
   
 # Folders ----------------------------------------------------------------------
 
-  vocc_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") # Use the rasts so can crop them
+  # vocc_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") # Use the rasts so can crop them
   df_fol <- make_folder(source_disk, "3_velocity_decadal_median_timeseries", "dfs") # Use the rasts so can crop them
   plot_fol <- make_folder(source_disk, "6_velocity_aus_plot", "timeseries")
   fig_fol <- make_folder(source_disk, "_figures", "")
@@ -41,50 +41,10 @@
   
   
   
-  
-# Get rasters cropped and in df format -----------------------------------------
-  
-  do_mask_df <- function(f){
-    
-    ssp <- basename(f) %>%
-      str_split_i(., "_", 3)
-    esm <- basename(f) %>%
-      str_split_i(., "_", 4)
-    term <- basename(f) %>%
-      str_split_i(., "_", 5)
-    
-    d <- readRDS(f) # Read it in
-    m <- mask(d, eez_shp) # Mask it
-    crs(m) <- "EPSG:4326"
-
-    cat_df <- m %>%
-      as.data.frame(xy = TRUE) %>%
-      as_tibble() %>%
-      pivot_longer(cols = -c(x, y), # Multilayer files so need to pivot 
-                   names_to = "year",
-                   values_to = "velocity") %>%
-      mutate(year = str_split_i(year, "_", 1) %>% as.numeric(),
-             ssp  = ssp,
-             term = term,
-             esm  = esm,
-             cat  = case_when(y <= q[[1]] ~ "south",
-                              y > q[[1]] & y <= q[[2]] ~ "mid",
-                              y > q[[2]] ~ "north"))
-    
-    return(cat_df)
-  }
-  
-  df_comb <- map(all_files, do_mask_df) %>%
-    bind_rows()
-  df_comb
-  saveRDS(df_comb, file = paste0(df_fol, "/velocity_decadal_timeseries-median_df_combined_ssp-esm-term.RDS"))
-  
-  
-  
 
 # Create plotting df -----------------------------------------------------------
   
-  df_comb <- readRDS(paste0(df_fol, "/velocity_decadal_timeseries-median_df_combined_ssp-esm-term.RDS"))
+  df_comb <- readRDS(paste0(df_fol, "/velocity_decadal_timeseries-median_cropped_df_combined_ssp-esm-term.RDS"))
   
   df_comb %>% 
     filter(term != "recent")
@@ -237,6 +197,7 @@
       geom_sf(data = line1_sf, color = "grey30", linetype = "dashed", size = 0.5) +
       geom_sf(data = line2_sf, color = "grey30", linetype = "dashed", size = 0.5) +
       theme_void()
+    a
     
     ggsave(a, file = paste0(fig_fol, "/oceania_graticules_regions.pdf"),
            width = 8, height = 10, dpi = 300)
