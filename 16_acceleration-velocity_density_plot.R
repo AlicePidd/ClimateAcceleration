@@ -90,15 +90,31 @@
   
 # Plot -------------------------------------------------------------------------
   
-  term_order  <- c("near", "mid", "intermediate", "long")
+  # term_order  <- c("near", "mid", "intermediate", "long")
+  term_order <- c("recent", "near", "mid", "intermediate", "long")
   zone_cols   <- c("mpas" = "#0a9396", "nonmpas" = "#EE9B00")
   df <- plot_df2
   d_var <- "velocity"
   
   make_plot <- function(df, d_var) {
     
+    ssps <- unique(df$ssp)
+    terms <- unique(df$term)
+    
+    hist_expanded <- hist_df2 %>%
+      filter(var == d_var) %>%
+      dplyr::select(-ssp, -term) %>% 
+      cross_join(tibble(ssp = ssps, term_new = terms)) %>%
+      rename(term = term_new) %>%
+      mutate(zone = factor(zone, levels = c("nonmpas", "mpas")),
+             term = factor(term, levels = term_order))
+    
     med_df <- df %>%
       filter(var == d_var) %>%
+      group_by(var, ssp, term, zone) %>%
+      summarise(med = median(value, na.rm = TRUE), .groups = "drop")
+    
+    med_h_df <- hist_expanded %>%
       group_by(var, ssp, term, zone) %>%
       summarise(med = median(value, na.rm = TRUE), .groups = "drop")
     
@@ -107,21 +123,28 @@
       mutate(var = factor(var),
              zone = factor(zone, levels = c("nonmpas", "mpas"))) %>%
       ggplot(aes(x = value, fill = zone, colour = zone)) +
-      geom_density(alpha = 0.35, linewidth = 0.6) +
-      geom_vline(data = med_df, 
+      geom_density(data = hist_expanded,
+                   aes(x = value, colour = zone),
+                   alpha = 0.1,
+                   linetype = "dashed", linewidth = 0.2) +
+      geom_density(alpha = 0.35, linewidth = 0.5) +
+      geom_vline(data = med_h_df,
                  aes(xintercept = med, colour = zone),
-                 linetype = "solid",
-                 linewidth = 0.4) +
+                 linetype = "dashed", linewidth = 0.2) +
+      geom_vline(data = med_df,
+                 aes(xintercept = med, colour = zone),
+                 linetype = "solid", linewidth = 0.4) +
       facet_grid(ssp ~ var, scales = "free_x") +
       scale_fill_manual(values = zone_cols) +
       scale_colour_manual(values = zone_cols) +
       labs(x = NULL, y = "Density", fill = NULL, colour = NULL) +
-      theme_minimal(base_size = 11) +
+      theme_minimal() +
       theme(panel.grid.minor = element_blank(),
             panel.grid.major = element_line(linewidth = 0.2),
             legend.position = "top",
             strip.background = element_rect(fill = "grey90"))
   }
+  
   
   # Main text (mid-term only)
     p_velocity <- plot_df2 %>% 
@@ -135,10 +158,10 @@
       make_plot(., "acceleration")
     p_accel
     
-    ggsave(paste0(png_fol, "/density_velocity_mid.png"), p_velocity, width = 6,  height = 6)
-    ggsave(paste0(pdf_fol, "/density_velocity_mid.pdf"), p_velocity, width = 6,  height = 6)
-    ggsave(paste0(png_fol, "/density_accel_mid.png"), p_accel, width = 6,  height = 6)
-    ggsave(paste0(pdf_fol, "/density_accel_mid.pdf"), p_accel, width = 6,  height = 6)
+    ggsave(paste0(png_fol, "/density_velocity_mid.png"), p_velocity, width = 7,  height = 6)
+    ggsave(paste0(pdf_fol, "/density_velocity_mid.pdf"), p_velocity, width = 7,  height = 6)
+    ggsave(paste0(png_fol, "/density_accel_mid.png"), p_accel, width = 7,  height = 6)
+    ggsave(paste0(pdf_fol, "/density_accel_mid.pdf"), p_accel, width = 7,  height = 6)
     
   
   # Supplement (all terms, facet by term too)
@@ -163,9 +186,9 @@
     p_accel_supp
     
     ggsave(paste0(png_fol, "/density_velocity_all_terms.png"), p_velocity_ssp, width = 10,  height = 12)
-    ggsave(paste0(pdf_fol, "/density_velocity_mid.pdf"), p_velocity_ssp, width = 8,  height = 6)
-    ggsave(paste0(png_fol, "/density_accel_mid.png"), p_accel_supp, width = 8,  height = 6)
-    ggsave(paste0(pdf_fol, "/density_accel_mid.pdf"), p_accel_supp, width = 8,  height = 6)
+    ggsave(paste0(pdf_fol, "/density_velocity_all_terms.pdf"), p_velocity_ssp, width = 10,  height = 12)
+    ggsave(paste0(png_fol, "/density_accel_all_terms.png"), p_accel_supp, width = 10,  height = 12)
+    ggsave(paste0(pdf_fol, "/density_accel_all_terms.pdf"), p_accel_supp, width = 10,  height = 12)
     
   
   # ggsave("figures/density_mid.pdf",  p_main, width = 8,  height = 10)
