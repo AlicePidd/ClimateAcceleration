@@ -62,16 +62,16 @@
     #   2 velocity         9   216
   
   
-  # Truncate per var at q95 only
-    plot_df1 <- plot_df %>%
-      left_join(q_future, by = "var") %>%
-      mutate(value = pmin(value, q95)) %>%
-      dplyr::select(-q5, -q95)
-  
-    hist_df1 <- hist_df %>%
-      left_join(q_hist, by = "var") %>%
-      mutate(value = pmin(value, q95)) %>%
-      dplyr::select(-q5, -q95)
+  # # Truncate per var at q95 only
+  #   plot_df1 <- plot_df %>%
+  #     left_join(q_future, by = "var") %>%
+  #     mutate(value = pmin(value, q95)) %>%
+  #     dplyr::select(-q5, -q95)
+  # 
+  #   hist_df1 <- hist_df %>%
+  #     left_join(q_hist, by = "var") %>%
+  #     mutate(value = pmin(value, q95)) %>%
+  #     dplyr::select(-q5, -q95)
     
     
 # Truncate per var at q5 and q95
@@ -95,6 +95,8 @@
   zone_cols   <- c("mpas" = "#0a9396", "nonmpas" = "#EE9B00")
   df <- plot_df2
   d_var <- "velocity"
+  d_var <- "acceleration"
+  
   
   make_plot <- function(df, d_var) {
     
