@@ -193,9 +193,10 @@
     ggsave(paste0(pdf_fol, "/density_accel_all_terms.pdf"), p_accel_supp, width = 10,  height = 12)
     
   
-  # ggsave("figures/density_mid.pdf",  p_main, width = 8,  height = 10)
-  # ggsave("figures/density_supp.pdf", p_supp, width = 16, height = 12)  
-  
+
+    
+    
+# Plot circle things for 
 
     
     

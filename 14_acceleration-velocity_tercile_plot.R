@@ -15,7 +15,7 @@
 
 # Folders ----------------------------------------------------------------------
 
-  vocc_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts") 
+  vocc_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts/cropped") 
   accel_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
   plot_fol <- make_folder(source_disk, "8_tercile_aus_plot", "spatial") # Aus files
   pdf_fol <- make_folder(source_disk, "8_tercile_aus_plot", "spatial/pdfs") # Aus files
@@ -24,7 +24,7 @@
   
 # Load rasters -----------------------------------------------------------------
   
-  vel_files   <- dir(vocc_fol, full.names = TRUE, pattern = ".RDS") %>%
+  vel_files <- dir(vocc_fol, full.names = TRUE, pattern = ".RDS") %>%
     str_subset("historical", negate = TRUE)
  
   accel_files <- dir(accel_fol,  full.names = TRUE, pattern = ".RDS") %>%
@@ -39,6 +39,7 @@
   accel_stack <- map(accel_files, load_stack)
   
   
+
   
   
   
@@ -47,14 +48,23 @@
   # (velocity tercile * 10 + acceleration tercile; 1 = low, 3 = high)
  
   ## Pool values across every combo to get global breaks
-    all_vel_vals <- map(vel_stack, \(r) values(r, na.rm = TRUE)) %>% 
+    all_vel_vals <- map(vel_stack, function(r) values(r, na.rm = TRUE)) %>% 
       unlist()
-    all_accel_vals <- map(accel_stack, \(r) values(r, na.rm = TRUE)) %>% 
+    all_accel_vals <- map(accel_stack, function(r) values(r, na.rm = TRUE)) %>% 
       unlist()
     
     vel_breaks <- quantile(all_vel_vals, c(1/3, 2/3))  # two cut points
+    vel_breaks
     accel_breaks <- quantile(all_accel_vals, c(1/3, 2/3))
-  
+    accel_breaks
+    
+    range(all_vel_vals)
+    range(all_accel_vals)
+    quantile(all_accel_vals, c(0.05, 0.95))
+    quantile(all_accel_vals, c(0.025, 0.975))
+    
+    quantile(all_accel_vals, c(0.025, 0.975)) %>% 
+    
   
   ## Classify each rast using fixed global breaks
     # ≤ 1st tercile = 1
@@ -83,7 +93,7 @@
   term_order <- c("near", "mid", "intermediate", "long")
   combos <- expand_grid(ssp = ssp_list, term = term_list[2:5])  # adjust indices as needed
   combos
-  ssp = "ssp245"
+  # ssp <- "ssp245"
   
   plot_bivariate <- function(ssp, pal_name) {
  
@@ -183,33 +193,34 @@
       message("Saved: ", basename(o_nm))
   }
  
+  
 
     
 # Palettes ----------------------------------------------------------------------
   # First digit = velocity tercile (1 = slow, 3 = fast)
   # Second digit = acceleration tercile (1 = low, 3 = high)
  
-  # ## tealochre
-  #   bivar_pal <- c("11"="#F8F0D0","12"="#E8B830","13"="#A07800",
-  #                  "21"="#60C8D0","22"="#789080","23"="#604800",
-  #                  "31"="#004858","32"="#003038","33"="#001810")
-  #   corner_pal <- c("Slow vel, low acc" ="#F8F0D0",
-  #                   "Slow vel, high acc"="#A07800",
-  #                   "Fast vel, low acc" ="#004858",
-  #                   "Fast vel, high acc"="#001810")
-  #   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre"))
-  
-  
   ## tealochre1
-    ##**THIS ONE**
-    bivar_pal <- c("11"="#F8F4E4","12"="#F0C050","13"="#DA9500",
-                   "21"="#60C8D0","22"="#789080","23"="#513700",
-                   "31"="#008089","32"="#003F5A","33"="#001911")
-    corner_pal <- c("Slow vel, low acc" ="#F8F4E4",
-                    "Slow vel, high acc"="#DA9500",
-                    "Fast vel, low acc" ="#008089",
-                    "Fast vel, high acc"="#001911")
-    walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre1"))
+  ##**THIS ONE**
+  bivar_pal <- c("11"="#F8F4E4","12"="#F0C050","13"="#DA9500",
+                 "21"="#60C8D0","22"="#789080","23"="#513700",
+                 "31"="#008089","32"="#003F5A","33"="#001911")
+  corner_pal <- c("Slow vel, low acc" ="#F8F4E4",
+                  "Slow vel, high acc"="#DA9500",
+                  "Fast vel, low acc" ="#008089",
+                  "Fast vel, high acc"="#001911")
+  walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre1"))
+  
+  
+    # ## tealochre
+    #   bivar_pal <- c("11"="#F8F0D0","12"="#E8B830","13"="#A07800",
+    #                  "21"="#60C8D0","22"="#789080","23"="#604800",
+    #                  "31"="#004858","32"="#003038","33"="#001810")
+    #   corner_pal <- c("Slow vel, low acc" ="#F8F0D0",
+    #                   "Slow vel, high acc"="#A07800",
+    #                   "Fast vel, low acc" ="#004858",
+    #                   "Fast vel, high acc"="#001810")
+    #   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre"))
   
   
   ## tealcoral
