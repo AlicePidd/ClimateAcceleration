@@ -111,7 +111,7 @@
       mutate(zone = factor(zone, levels = c("nonmpas", "mpas")),
              term = factor(term, levels = term_order))
     
-    med_df <- df %>%
+    med_df <- df %>%    #**Printed this for each d_var (velocity/accel) to populate int-text results**
       filter(var == d_var) %>%
       group_by(var, ssp, term, zone) %>%
       summarise(med = median(value, na.rm = TRUE), .groups = "drop")
