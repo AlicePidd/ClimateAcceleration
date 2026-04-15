@@ -165,7 +165,7 @@
     }
 
       
-  ## For acceleration --------------
+  ## For acceleration -------------
     get_accel_brks <- function(r, breaks) {
       classify(r, rcl = matrix(c(-Inf, -breaks[[1]], 1, # Infinity to the negative conversion of teh abs 15%
                                  -breaks[[1]], breaks[[1]], 2, # Between negative 15% to positive 15% (mid-ish 30%)
@@ -174,7 +174,7 @@
     }
   
       
-  ## Function to do it --------------
+  ## Function to do it -------------
     bivar_classify_global <- function(r_vel, r_acc) {
       get_vel_brks(r_vel, vel_breaks) * 10 + get_accel_brks(r_acc, accel_breaks) # * 10 means than the coding will end up a 2 digits number for easier categorising (11, 12, 13, 21, 22, 23, 31, 32, 33)
     }
