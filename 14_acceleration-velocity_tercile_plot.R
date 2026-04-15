@@ -1,4 +1,4 @@
-# Plotting velcoity and acceleration overlap spatially as terciles
+# Plotting velocity and acceleration overlap spatially as categories
   # Written by Alice P
     # 30 March 2026
   # Inspired by Brito-Morales et al. 2020
@@ -17,75 +17,197 @@
 
   vocc_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts/cropped") 
   accel_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
-  plot_fol <- make_folder(source_disk, "8_tercile_aus_plot", "spatial") # Aus files
+  plot_fol <- make_folder(source_disk, "8_tercile_aus_plot", "spatial/pngs") # Aus files
   pdf_fol <- make_folder(source_disk, "8_tercile_aus_plot", "spatial/pdfs") # Aus files
   
   
   
 # Load rasters -----------------------------------------------------------------
+  ## Projected
+    vel_files <- dir(vocc_fol, full.names = TRUE, pattern = ".RDS") %>%
+      str_subset("historical", negate = TRUE)
+    accel_files <- dir(accel_fol,  full.names = TRUE, pattern = ".RDS") %>%
+      str_subset("historical", negate = TRUE)
   
-  vel_files <- dir(vocc_fol, full.names = TRUE, pattern = ".RDS") %>%
-    str_subset("historical", negate = TRUE)
+  ## Historical
+    # vel_hfiles <- dir(vocc_fol, full.names = TRUE, pattern = "historical")
+    accel_hfiles <- dir(accel_fol,  full.names = TRUE, pattern = "historical") 
+  
+  load_stack <- function(files) {
+    f <- files
+    readRDS(f)[[1]]
+  }
+
+  ## Projected
+    vel_stack <- map(vel_files, load_stack)
+    accel_stack <- map(accel_files, load_stack)
+    accel_stack <- map(accel_stack, function(r) {
+      names(r) <- str_remove(names(r), "-term")
+      r
+    })
+    
+  ## Historical
+    # vel_hstack <- map(vel_hfiles, load_stack)
+    accel_hstack <- map(accel_hfiles, load_stack)
+
+  
+  
+  
+# Bivariate classification by middleish 30% of values --------------------------
+  # Calculates the absolute value of 
+  
+    ## Was previously using terciles
+      # Splits into terciles, combines into codes 11-33
+        # Classifies data as 1 = low, 2 = med, 3 = high)
  
-  accel_files <- dir(accel_fol,  full.names = TRUE, pattern = ".RDS") %>%
-    str_subset("historical", negate = TRUE)
+  ## Pool values across every combo to get breaks ------------
+    vel_vals <- map(vel_stack, function(r) values(r, na.rm = TRUE)) %>%
+      unlist()
+    accel_vals <- map(accel_stack, function(r) values(r, na.rm = TRUE)) %>%
+      unlist()
+    
+    # vel_hvals <- map(vel_hstack, function(r) values(r, na.rm = TRUE)) %>% 
+    #   unlist() 
+    accel_hvals <- map(accel_hstack, function(r) values(r, na.rm = TRUE)) %>% 
+      unlist() 
+    
+    
+    
+    # # Investigating density of the data in general ---------
+    # vel_hvals <- map(vel_hstack, function(r) values(r, na.rm = TRUE)) %>%
+    #   unlist() %>%
+    #   as_tibble()
+    # accel_hvals <- map(accel_hstack, function(r) values(r, na.rm = TRUE)) %>%
+    #   unlist() %>%
+    #   as_tibble()
+    # 
+    # all_vel <- map(vel_stack, function(r) values(r, na.rm = TRUE)) %>%
+    #   unlist() %>%
+    #   as_tibble()
+    # all_accel <- map(accel_stack, function(r) values(r, na.rm = TRUE)) %>%
+    #   unlist() %>%
+    #   as_tibble()
+    # 
+    # 
+    # d1 <- ggplot() +
+    #   geom_density(data = all_vel,
+    #                aes(x = value),
+    #                alpha = 0.1, colour = "blue", linewidth = 0.6) +
+    #   geom_density(data = vel_hvals,
+    #                aes(x = value),
+    #                alpha = 0.1, colour = "orange", linewidth = 0.6) +
+    #   geom_vline(data = all_vel,
+    #              aes(xintercept = median(value, na.rm = TRUE)),
+    #              colour = "blue", alpha = 0.3) +
+    #   geom_vline(data = all_vel,
+    #              aes(xintercept = quantile(value, 0.025)),
+    #              colour = "black", linetype = "dashed", alpha = 0.3, linewidth = 0.4) +
+    #   geom_vline(data = all_vel,
+    #              aes(xintercept = quantile(value, 0.975)),
+    #              colour = "black", linetype = "dashed", alpha = 0.3, linewidth = 0.4) +
+    #   coord_cartesian(xlim = c(-200, 200)) +
+    #   labs(x = "velocity (km decade ^-1)", title = "projected (blue), recent term (orange)") +
+    #   theme_bw(base_size = 14)
+    # 
+    # d2 <- ggplot() +
+    #   geom_density(data = all_accel,
+    #                aes(x = value),
+    #                alpha = 0.1, colour = "red", linewidth = 0.6) +
+    #   geom_density(data = accel_hvals,
+    #                aes(x = value),
+    #                alpha = 0.1, colour = "orange", linewidth = 0.6) +
+    #   geom_vline(data = all_accel,
+    #              aes(xintercept = median(value, na.rm = TRUE)),
+    #              colour = "red", alpha = 0.3) +
+    #   geom_vline(data = all_accel,
+    #              aes(xintercept = quantile(value, 0.025)),
+    #              colour = "black", linetype = "dashed", alpha = 0.3, linewidth = 0.4) +
+    #   geom_vline(data = all_accel,
+    #              aes(xintercept = quantile(value, 0.975)),
+    #              colour = "black", linetype = "dashed", alpha = 0.3, linewidth = 0.4) +
+    #   coord_cartesian(xlim = c(-50, 50)) +
+    #   labs(x = "acceleration (km decade ^-2)", title = "projected (red), recent term (orange)") +
+    #   theme_bw(base_size = 14)
+    # 
+    #   d1+d2
+    
+    # 
+    # ## Tertile method ----------
+    #   vel_breaks <- quantile(vel_vals, c(1/3, 2/3))  # two cut points
+    #   vel_breaks
+    #     #  33.33333%  66.66667% 
+    #     #   32.46794   74.39638 
+    #   accel_breaks <- quantile(accel_vals, c(1/3, 2/3))
+    #   accel_breaks
+    #     #  33.33333%   66.66667% 
+    #     # -0.9520193   0.3517837 
+    
+      
+  ## Breaking the data  ------------
+    # vel_breaks <- quantile(abs(vel_vals), 0.15) 
+    # vel_breaks
+    # accel_breaks <- quantile(abs(accel_vals), 0.15)
+    # accel_breaks
   
-    load_stack <- function(files) {
-      f <- files
-      readRDS(f)[[1]]
+    ### For velocity: 
+      # 1 = vel <0; 
+      # 2 = vel ≥ 0 < quantile(., 0.25); 
+      # 3 = vel ≥ quantile(., 0.25) i.e., everything else
+      vel_breaks <- quantile(vel_vals, 0.25) 
+      vel_breaks # 24.75361
+    
+    
+    ### For accel: Middle-ish 30% method (for accel only) ------------
+      # (abs val gives the abs max, then just make it negative for symmetrical breaks)
+      accel_breaks <- quantile(abs(accel_hvals), 0.15) 
+      accel_breaks # 0.3965666
+      
+# breaks <- accel_breaks
+    
+  
+# Classify each rast using fixed global breaks -----------
+    
+  ## For velocity --------------
+    get_vel_brks <- function(r, breaks) { # Tertile-ish method
+      classify(r, rcl = matrix(c(-Inf, 0, 1,  # vel < 0
+                                 0, breaks[[1]], 2,  # vel >= 0 and < q25
+                                 breaks[[1]], Inf, 3),  # vel >= q25
+                               ncol = 3, byrow = TRUE),
+               right = FALSE) # intervals closed on left, open on right
     }
 
-  vel_stack <- map(vel_files, load_stack)
-  accel_stack <- map(accel_files, load_stack)
-  
-  
-
-  
-  
-  
-# Bivariate classification and terciles ----------------------------------------
-  # Splits into terciles, combines into codes 11-33
-  # (velocity tercile * 10 + acceleration tercile; 1 = low, 3 = high)
- 
-  ## Pool values across every combo to get global breaks
-    all_vel_vals <- map(vel_stack, function(r) values(r, na.rm = TRUE)) %>% 
-      unlist()
-    all_accel_vals <- map(accel_stack, function(r) values(r, na.rm = TRUE)) %>% 
-      unlist()
-    
-    vel_breaks <- quantile(all_vel_vals, c(1/3, 2/3))  # two cut points
-    vel_breaks
-    accel_breaks <- quantile(all_accel_vals, c(1/3, 2/3))
-    accel_breaks
-    
-    range(all_vel_vals)
-    range(all_accel_vals)
-    quantile(all_accel_vals, c(0.05, 0.95))
-    quantile(all_accel_vals, c(0.025, 0.975))
-    
-    quantile(all_accel_vals, c(0.025, 0.975)) %>% 
-    
-  
-  ## Classify each rast using fixed global breaks
-    # ≤ 1st tercile = 1
-    # > 1st and ≤ 2nd = 2
-    # > 2nd = 3
-    
-    tercile_fixed <- function(r, breaks) {
-      classify(r, rcl = matrix(c(-Inf, breaks[1], 1,
-                                 breaks[1], breaks[2], 2,
-                                 breaks[2], Inf, 3),
+      
+  ## For acceleration --------------
+    get_accel_brks <- function(r, breaks) {
+      classify(r, rcl = matrix(c(-Inf, -breaks[[1]], 1, # Infinity to the negative conversion of teh abs 15%
+                                 -breaks[[1]], breaks[[1]], 2, # Between negative 15% to positive 15% (mid-ish 30%)
+                                 breaks[[1]], Inf, 3), # positive 15% and above
                                ncol = 3, byrow = TRUE))
-      }
-  
-    bivar_classify_global <- function(r_vel, r_acc) {
-      tercile_fixed(r_vel, vel_breaks) * 10 + tercile_fixed(r_acc, accel_breaks)
     }
-    
-    bivar_rasts <- map2(vel_stack, accel_stack, bivar_classify_global)
+  
+      
+  ## Function to do it --------------
+    bivar_classify_global <- function(r_vel, r_acc) {
+      get_vel_brks(r_vel, vel_breaks) * 10 + get_accel_brks(r_acc, accel_breaks) # * 10 means than the coding will end up a 2 digits number for easier categorising (11, 12, 13, 21, 22, 23, 31, 32, 33)
+    }
 
-  
-  
+      
+  ## Checking name order -------------
+    nms <- paste0("median_", combos$ssp, "_", combos$term) # names we need in combos order
+    nms
+    
+    vel_nms <- map_chr(vel_stack, names) # get actual names of each stack
+    accel_nms <- map_chr(accel_stack, names)
+    
+    vel_stack_ordered <- vel_stack[match(nms, vel_nms)] # reorder both stacks to match combos order
+    accel_stack_ordered <- accel_stack[match(nms, accel_nms)]
+    
+    map_chr(vel_stack_ordered, names) # checking order
+    map_chr(accel_stack_ordered, names)
+    
+    bivar_rasts <- map2(vel_stack_ordered, accel_stack_ordered, bivar_classify_global)
+
+    
   
   
 # Plot -------------------------------------------------------------------------
@@ -140,8 +262,8 @@
     # Legend
       legend <- expand_grid(vel = 1:3, acc = 1:3) %>%
         mutate(code  = factor(vel * 10 + acc),
-               vel_l = factor(vel, 1:3, c("Slow", "Med", "Fast")),
-               acc_l = factor(acc, 1:3, c("Low",  "Med", "High"))) %>%
+               vel_l = factor(vel, 1:3, c("Negative", "Slow", "Fast")),
+               acc_l = factor(acc, 1:3, c("Decel",  "Stable", "Accel"))) %>%
         ggplot(aes(acc_l, vel_l, fill = code)) +
         geom_tile(colour = "white", linewidth = 0.8) +
         scale_fill_manual(values = bivar_pal, guide = "none") +
@@ -150,8 +272,8 @@
         theme(panel.grid = element_blank(), aspect.ratio = 1)
  
     # Bar chart
-      corner_codes <- c("Slow vel, low acc"  = 11, "Slow vel, high acc" = 13,
-                        "Fast vel, low acc"  = 31, "Fast vel, high acc" = 33)
+      corner_codes <- c("Negative velocity, Decelerating"  = 11, "Negative velocity, Accelerating" = 13,
+                        "Fast velocity, Decelerating"  = 31, "Fast velocity, Accelerating" = 33)
       
       bar_data <- combos_ssp %>%
         mutate(term = factor(term, levels = term_order)) %>%
@@ -184,10 +306,10 @@
         plot_annotation(tag_levels = "a") &
         theme(plot.margin = margin(10, 10, 10, 10))
    
-      o_nm <- paste0(plot_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, ".png")
+      o_nm <- paste0(plot_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, "_mixedthresholds.png")
       ggsave(filename = o_nm, plot = fig, width = 12, height = 20)
       
-      o_nm_pdf <- paste0(pdf_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, ".pdf")
+      o_nm_pdf <- paste0(pdf_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, "_mixedthresholds.pdf")
       ggsave(filename = o_nm_pdf, plot = fig, width = 12, height = 20)
       
       message("Saved: ", basename(o_nm))
@@ -202,13 +324,14 @@
  
   ## tealochre1
   ##**THIS ONE**
+
   bivar_pal <- c("11"="#F8F4E4","12"="#F0C050","13"="#DA9500",
-                 "21"="#60C8D0","22"="#789080","23"="#513700",
+                 "21"="#60C8D0","22"="#789080","23"="#501700", #513700
                  "31"="#008089","32"="#003F5A","33"="#001911")
-  corner_pal <- c("Slow vel, low acc" ="#F8F4E4",
-                  "Slow vel, high acc"="#DA9500",
-                  "Fast vel, low acc" ="#008089",
-                  "Fast vel, high acc"="#001911")
+  corner_pal <- c("Negative velocity, Decelerating" ="#F8F4E4",
+                  "Negative velocity, Accelerating"="#DA9500",
+                  "Fast velocity, Decelerating" ="#008089",
+                  "Fast velocity, Accelerating"="#001911")
   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre1"))
   
   
