@@ -30,7 +30,6 @@
       str_subset("historical", negate = TRUE)
   
   ## Historical
-    # vel_hfiles <- dir(vocc_fol, full.names = TRUE, pattern = "historical")
     accel_hfiles <- dir(accel_fol,  full.names = TRUE, pattern = "historical") 
   
   load_stack <- function(files) {
@@ -38,7 +37,7 @@
     readRDS(f)[[1]]
   }
 
-  ## Projected
+  ## Stack projected -------------
     vel_stack <- map(vel_files, load_stack)
     accel_stack <- map(accel_files, load_stack)
     accel_stack <- map(accel_stack, function(r) {
@@ -46,31 +45,25 @@
       r
     })
     
-  ## Historical
-    # vel_hstack <- map(vel_hfiles, load_stack)
+  ## Stack historical -------------
     accel_hstack <- map(accel_hfiles, load_stack)
 
   
   
   
-# Bivariate classification by middleish 30% of values --------------------------
-  # Calculates the absolute value of 
-  
+# Bivariate classification by mixed thresholds based on each metric ------------
     ## Was previously using terciles
       # Splits into terciles, combines into codes 11-33
         # Classifies data as 1 = low, 2 = med, 3 = high)
  
-  ## Pool values across every combo to get breaks ------------
+  ## Pool values across every combo to get breaks -------------
     vel_vals <- map(vel_stack, function(r) values(r, na.rm = TRUE)) %>%
       unlist()
     accel_vals <- map(accel_stack, function(r) values(r, na.rm = TRUE)) %>%
       unlist()
     
-    # vel_hvals <- map(vel_hstack, function(r) values(r, na.rm = TRUE)) %>% 
-    #   unlist() 
     accel_hvals <- map(accel_hstack, function(r) values(r, na.rm = TRUE)) %>% 
       unlist() 
-    
     
     
     # # Investigating density of the data in general ---------
@@ -132,7 +125,7 @@
     #   d1+d2
     
     # 
-    # ## Tertile method ----------
+    # ## Tertile threshold method -------------
     #   vel_breaks <- quantile(vel_vals, c(1/3, 2/3))  # two cut points
     #   vel_breaks
     #     #  33.33333%  66.66667% 
@@ -143,31 +136,26 @@
     #     # -0.9520193   0.3517837 
     
       
-  ## Breaking the data  ------------
-    # vel_breaks <- quantile(abs(vel_vals), 0.15) 
-    # vel_breaks
-    # accel_breaks <- quantile(abs(accel_vals), 0.15)
-    # accel_breaks
-  
+  ## Breaking the data -------------
     ### For velocity: 
       # 1 = vel <0; 
       # 2 = vel ≥ 0 < quantile(., 0.25); 
       # 3 = vel ≥ quantile(., 0.25) i.e., everything else
-      vel_breaks <- quantile(vel_vals, 0.25) 
-      vel_breaks # 24.75361
+      vel_breaks <- quantile(vel_vals[vel_vals >= 0], 0.25) # 27.7718 (25th percentile of non-negative values only)
+      # vel_breaks <- quantile(vel_vals, 0.25) # 24.75361 (25th percentile of ALL values)
+      vel_breaks 
     
     
-    ### For accel: Middle-ish 30% method (for accel only) ------------
+    ### For accel: Middle-ish 30% method (for accel only) -------------
       # (abs val gives the abs max, then just make it negative for symmetrical breaks)
       accel_breaks <- quantile(abs(accel_hvals), 0.15) 
       accel_breaks # 0.3965666
       
-# breaks <- accel_breaks
-    
+
   
-# Classify each rast using fixed global breaks -----------
+# Classify each rast using fixed global breaks ---------------------------------
     
-  ## For velocity --------------
+  ## For velocity -------------
     get_vel_brks <- function(r, breaks) { # Tertile-ish method
       classify(r, rcl = matrix(c(-Inf, 0, 1,  # vel < 0
                                  0, breaks[[1]], 2,  # vel >= 0 and < q25
@@ -192,7 +180,11 @@
     }
 
       
-  ## Checking name order -------------
+  ## Checking name order and fixing -------------
+    # term_order <- c("near", "mid", "intermediate", "long")
+    combos <- expand_grid(ssp = ssp_list, term = term_list[2:5])  # adjust indices as needed
+    combos
+      
     nms <- paste0("median_", combos$ssp, "_", combos$term) # names we need in combos order
     nms
     
@@ -211,11 +203,6 @@
   
   
 # Plot -------------------------------------------------------------------------
-  
-  term_order <- c("near", "mid", "intermediate", "long")
-  combos <- expand_grid(ssp = ssp_list, term = term_list[2:5])  # adjust indices as needed
-  combos
-  # ssp <- "ssp245"
   
   plot_bivariate <- function(ssp, pal_name) {
  
@@ -319,8 +306,8 @@
 
     
 # Palettes ----------------------------------------------------------------------
-  # First digit = velocity tercile (1 = slow, 3 = fast)
-  # Second digit = acceleration tercile (1 = low, 3 = high)
+  # First digit = velocity (1 = neg, 3 = fast)
+  # Second digit = acceleration (1 = decel, 3 = accel)
  
   ## tealochre1
   ##**THIS ONE**
@@ -335,54 +322,43 @@
   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre1"))
   
   
-    # ## tealochre
-    #   bivar_pal <- c("11"="#F8F0D0","12"="#E8B830","13"="#A07800",
-    #                  "21"="#60C8D0","22"="#789080","23"="#604800",
-    #                  "31"="#004858","32"="#003038","33"="#001810")
-    #   corner_pal <- c("Slow vel, low acc" ="#F8F0D0",
-    #                   "Slow vel, high acc"="#A07800",
-    #                   "Fast vel, low acc" ="#004858",
-    #                   "Fast vel, high acc"="#001810")
-    #   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre"))
+  
+  ## Other pals -----------------
+  # ## tealcoral
+  #   bivar_pal <- c("11" = "#f2f2f2", "12" = "#f0b89a", "13" = "#d4522a", # #f0b89a
+  #                  "21" = "#7abfbf", "22" = "#9a9a8a", "23" = "#8a3a2a",
+  #                  "31" = "#0a4a4a", "32" = "#3a3a3a", "33" = "#6a0a0a")
+  #   
+  #   corner_pal <- c("Slow vel, low acc"  = "#f2f2f2",
+  #                   "Slow vel, high acc" = "#d4522a",
+  #                   "Fast vel, low acc"  = "#0a4a4a",
+  #                   "Fast vel, high acc" = "#6a0a0a")
+  #   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealcoral"))
   
   
-  ## tealcoral
-    bivar_pal <- c("11" = "#f2f2f2", "12" = "#f0b89a", "13" = "#d4522a", # #f0b89a
-                   "21" = "#7abfbf", "22" = "#9a9a8a", "23" = "#8a3a2a",
-                   "31" = "#0a4a4a", "32" = "#3a3a3a", "33" = "#6a0a0a")
-    
-    corner_pal <- c("Slow vel, low acc"  = "#f2f2f2",
-                    "Slow vel, high acc" = "#d4522a",
-                    "Fast vel, low acc"  = "#0a4a4a",
-                    "Fast vel, high acc" = "#6a0a0a")
-    walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealcoral"))
+  # ## ambernavy
+  #   bivar_pal <- c("11"="#E9E9D8","12"="#F0C050","13"="#C77100",
+  #                  "21"="#88C8E0","22"="#80a070","23"="#7D7466",
+  #                  "31"="#095B7F","32"="#223153","33"="#0A1808")
+  #   corner_pal <- c("Slow vel, low acc" ="#E9E9D8",
+  #                   "Slow vel, high acc"="#C77100",
+  #                   "Fast vel, low acc" ="#223153",
+  #                   "Fast vel, high acc"="#0A1808")
+  #   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "ambernavy"))
   
   
-  ## ambernavy
-    bivar_pal <- c("11"="#E9E9D8","12"="#F0C050","13"="#C77100",
-                   "21"="#88C8E0","22"="#80a070","23"="#7D7466",
-                   "31"="#095B7F","32"="#223153","33"="#0A1808")
-    corner_pal <- c("Slow vel, low acc" ="#E9E9D8",
-                    "Slow vel, high acc"="#C77100",
-                    "Fast vel, low acc" ="#223153",
-                    "Fast vel, high acc"="#0A1808")
-    walk(ssp_list, ~ plot_bivariate(.x, pal_name = "ambernavy"))
+  # ## ambernavy1
+  #   bivar_pal <- c("11"="#E9E9D8","12"="#F0C050","13"="#D66305",
+  #                  "21"="#79B9BF","22"="#6A7C82","23"="#5D3636",
+  #                  "31"="#095B7F","32"="#223153","33"="#0A1808")
+  #   corner_pal <- c("Slow vel, low acc" ="#E9E9D8",
+  #                   "Slow vel, high acc"="#D66305",
+  #                   "Fast vel, low acc" ="#223153",
+  #                   "Fast vel, high acc"="#0A1808")
+  #   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "ambernavy1"))
   
-  
-  ## ambernavy1
-    bivar_pal <- c("11"="#E9E9D8","12"="#F0C050","13"="#D66305",
-                   "21"="#79B9BF","22"="#6A7C82","23"="#5D3636",
-                   "31"="#095B7F","32"="#223153","33"="#0A1808")
-    corner_pal <- c("Slow vel, low acc" ="#E9E9D8",
-                    "Slow vel, high acc"="#D66305",
-                    "Fast vel, low acc" ="#223153",
-                    "Fast vel, high acc"="#0A1808")
-    walk(ssp_list, ~ plot_bivariate(.x, pal_name = "ambernavy1"))
-  
-  
-  
-  
-  
+
+  # ## electricsaffron
   # bivar_pal <- c("11"="#FFFACC","12"="#FFD000","13"="#C06000",
   #                "21"="#50A8FF","22"="#6080A0","23"="#804000",
   #                "31"="#001880","32"="#001050","33"="#100800")
