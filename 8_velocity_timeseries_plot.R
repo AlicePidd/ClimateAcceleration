@@ -49,16 +49,44 @@
   df_comb %>% 
     filter(term != "recent")
   
-  plot_df <- df_comb %>%
-    mutate(cat = factor(cat, levels = c("north", "mid", "south"))) %>%
-    group_by(year, cat, ssp, term) %>%
+  
+  
+  ## *Maybe* should weight it by number of grid cells (rows?) in each cat, if they are very different? -----------
+    df_comb %>%
+      distinct(x, y, cat) %>%
+      count(cat)
+    # # A tibble: 3 × 2
+    #     cat       n
+    #     <chr> <int>
+    #   1 mid    4640
+    #   2 north  3604
+    #   3 south  3201
+    
+      ## Ehh. I'll just state it on the figure for now.
+  
+  
+  
+  ## Get median of each ESM per year, per region (and ssp, term) -----------
+  
+  esm_meds <- df_comb %>%
+    group_by(year, ssp, term, cat, esm) %>%
+    summarise(esm_median = median(velocity, na.rm = TRUE), .groups = "drop")
+  
+  
+  
+  ## Get min and max of the ESM medians for the ribbon, per region per year (and ssp, term) -----------
+  
+  plot_df <- esm_meds %>%
+    group_by(year, ssp, term, cat) %>%
     summarise(
-      med_velocity = median(velocity, na.rm = TRUE),
-      lo_velocity  = quantile(velocity, 0.1, na.rm = TRUE),
-      hi_velocity  = quantile(velocity, 0.9, na.rm = TRUE),
+      med_velocity = median(esm_median, na.rm = TRUE),  # med of ESM medians
+      lo_velocity  = min(esm_median, na.rm = TRUE), # min ESM median 
+      hi_velocity  = max(esm_median, na.rm = TRUE), # max ESM median
       .groups = "drop"
     )
   
+  plot_df %>% 
+    filter(year == 2021)
   
   ssp_cols <- c(#"historical" = "#5F5E5A",
     "ssp126" = col_ssp126,
@@ -67,22 +95,9 @@
     "ssp585" = col_ssp585)
   
   
-
-  ## *Maybe* should weight it by number of grid cells (rows?) in each cat, if they are very different? -----------
-  df_comb %>%
-    distinct(x, y, cat) %>%
-    count(cat)
-  # # A tibble: 3 × 2
-  #     cat       n
-  #     <chr> <int>
-  #   1 mid    4640
-  #   2 north  3604
-  #   3 south  3201
-  
-  ## Ehh. I'll just state it on the figure for now.
   
   
-  ## Getting stats for quoting in result text -----------
+# Getting stats for quoting in result text -------------------------------------
   
   # min and max ribbon and line values at 2090
     plot_df %>%  
@@ -98,9 +113,7 @@
     plot_df %>% 
       group_by(ssp) %>% 
       filter(ssp == "historical") %>% 
-      summarise(min_ribbon = min(lo_velocity),
-                max_ribbon = max(hi_velocity),
-                min_median = min(med_velocity),
+      summarise(min_median = min(med_velocity),
                 max_median = max(med_velocity)) 
   
   # Across the whole timeseries, min/max values
@@ -112,7 +125,6 @@
                 max_median = max(med_velocity)) %>% 
       mutate(year = "whole_timeseries")
 
-    
   # By region (high, mid, low latitudes)
     plot_df %>% 
       group_by(cat, ssp) %>% 
@@ -128,17 +140,28 @@
       group_by(cat, ssp) %>% 
       summarise(min_ribbon = min(lo_velocity),
                 max_ribbon = max(hi_velocity),
-                min_median = min(med_velocity),
+                # min_median = min(med_velocity),
+                median = max(med_velocity)) %>% 
+      mutate(filter = "lat_region") %>% 
+      mutate(year = 2090) 
+    
+    
+  # By region (high, mid, low latitudes) + only historic
+    plot_df %>% 
+      filter(ssp == "historical") %>% 
+      group_by(cat, ssp) %>% 
+      summarise(min_median = min(med_velocity),
                 max_median = max(med_velocity)) %>% 
       mutate(filter = "lat_region")
+    
   
   
 # Plot timeseries --------------------------------------------------------------
   
   p <- ggplot() +
-    geom_ribbon(data = plot_df %>% filter(term == "recent"),
-                aes(x = year, ymin = lo_velocity, ymax = hi_velocity),
-                alpha = 0.1, colour = NA) +
+    # geom_ribbon(data = plot_df %>% filter(term == "recent"),
+    #             aes(x = year, ymin = lo_velocity, ymax = hi_velocity),
+    #             alpha = 0.1, colour = NA) +
     geom_line(data = plot_df %>% filter(term == "recent"),
               aes(x = year, y = med_velocity),
               colour = "grey40", lwd = 0.8) +
@@ -159,9 +182,9 @@
   p
   
   ggsave(p, file = paste0(plot_fol, "/velocity_decadal_timeseries-median_north-mid-south_ssp.pdf"),
-         width = 6, height = 10, dpi = 300)
+         width = 8, height = 10, dpi = 300)
   ggsave(p, file = paste0(plot_fol, "/velocity_decadal_timeseries-median_north-mid-south_ssp.png"),
-         width = 6, height = 10, dpi = 300)
+         width = 8, height = 10, dpi = 300)
   
   
   
