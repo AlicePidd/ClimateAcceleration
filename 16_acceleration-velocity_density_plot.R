@@ -52,7 +52,7 @@
   
   q_hist <- hist_df %>%
     group_by(var) %>%
-    summarise(q5  = round(quantile(value, 0.05)),
+    summarise(q5 = round(quantile(value, 0.05)),
               q95 = round(quantile(value, 0.95)))
   q_hist
     # # A tibble: 2 × 3
@@ -131,6 +131,9 @@
                    linetype = "dashed", linewidth = 0.2) +
       geom_density(alpha = 0.35, linewidth = 0.5) +
       geom_vline(data = med_h_df,
+                 aes(xintercept = 0), # Added a line at 0 on x-axis
+                 colour = "black", linetype = "solid", linewidth = 0.4) +
+      geom_vline(data = med_h_df,
                  aes(xintercept = med, colour = zone),
                  linetype = "dashed", linewidth = 0.2) +
       geom_vline(data = med_df,
@@ -160,10 +163,10 @@
       make_plot(., "acceleration")
     p_accel
     
-    ggsave(paste0(png_fol, "/density_velocity_mid.png"), p_velocity, width = 7,  height = 6)
-    ggsave(paste0(pdf_fol, "/density_velocity_mid.pdf"), p_velocity, width = 7,  height = 6)
-    ggsave(paste0(png_fol, "/density_accel_mid.png"), p_accel, width = 7,  height = 6)
-    ggsave(paste0(pdf_fol, "/density_accel_mid.pdf"), p_accel, width = 7,  height = 6)
+    ggsave(paste0(png_fol, "/density_velocity_mid_0line.png"), p_velocity, width = 7,  height = 6)
+    ggsave(paste0(pdf_fol, "/density_velocity_mid_0line.pdf"), p_velocity, width = 7,  height = 6)
+    ggsave(paste0(png_fol, "/density_accel_mid_0line.png"), p_accel, width = 7,  height = 6)
+    ggsave(paste0(pdf_fol, "/density_accel_mid_0line.pdf"), p_accel, width = 7,  height = 6)
     
   
   # Supplement (all terms, facet by term too)
@@ -187,10 +190,10 @@
     p_accel_supp <- wrap_plots(p_accel_supp, ncol = 1)
     p_accel_supp
     
-    ggsave(paste0(png_fol, "/density_velocity_all_terms.png"), p_velocity_ssp, width = 10,  height = 12)
-    ggsave(paste0(pdf_fol, "/density_velocity_all_terms.pdf"), p_velocity_ssp, width = 10,  height = 12)
-    ggsave(paste0(png_fol, "/density_accel_all_terms.png"), p_accel_supp, width = 10,  height = 12)
-    ggsave(paste0(pdf_fol, "/density_accel_all_terms.pdf"), p_accel_supp, width = 10,  height = 12)
+    ggsave(paste0(png_fol, "/density_velocity_all_terms_0line.png"), p_velocity_ssp, width = 10,  height = 12)
+    ggsave(paste0(pdf_fol, "/density_velocity_all_terms_0line.pdf"), p_velocity_ssp, width = 10,  height = 12)
+    ggsave(paste0(png_fol, "/density_accel_all_terms_0line.png"), p_accel_supp, width = 10,  height = 12)
+    ggsave(paste0(pdf_fol, "/density_accel_all_terms_0line.pdf"), p_accel_supp, width = 10,  height = 12)
     
   
 

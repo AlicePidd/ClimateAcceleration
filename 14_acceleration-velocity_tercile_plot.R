@@ -30,6 +30,7 @@
       str_subset("historical", negate = TRUE)
   
   ## Historical
+    vel_hfiles <- dir(vocc_fol, full.names = TRUE, pattern = "historical")
     accel_hfiles <- dir(accel_fol,  full.names = TRUE, pattern = "historical") 
   
   load_stack <- function(files) {
@@ -46,6 +47,7 @@
     })
     
   ## Stack historical -------------
+    vel_hstack <- map(vel_hfiles, load_stack)
     accel_hstack <- map(accel_hfiles, load_stack)
 
   
@@ -61,7 +63,9 @@
       unlist()
     accel_vals <- map(accel_stack, function(r) values(r, na.rm = TRUE)) %>%
       unlist()
-    
+
+    vel_hvals <- map(vel_hstack, function(r) values(r, na.rm = TRUE)) %>%
+      unlist()
     accel_hvals <- map(accel_hstack, function(r) values(r, na.rm = TRUE)) %>% 
       unlist() 
     
@@ -141,9 +145,13 @@
       # 1 = vel <0; 
       # 2 = vel ≥ 0 < quantile(., 0.25); 
       # 3 = vel ≥ quantile(., 0.25) i.e., everything else
-      vel_breaks <- quantile(vel_vals[vel_vals >= 0], 0.25) # 27.7718 (25th percentile of non-negative values only)
       # vel_breaks <- quantile(vel_vals, 0.25) # 24.75361 (25th percentile of ALL values)
+      # vel_breaks <- quantile(vel_vals[vel_vals >= 0], 0.25) # 27.7718 (25th percentile of non-negative values only)
+      vel_breaks <- quantile(vel_vals[vel_vals >= 0], 0.30) # 32.16665 (30th percentile of non-negative values only)
       vel_breaks 
+      vel_hbreaks <- quantile(vel_hvals[vel_hvals >= 0], 0.30) # 35.79337 (30th percentile of non-negative historical values only)
+      vel_hbreaks 
+      
     
     
     ### For accel: Middle-ish 30% method (for accel only) -------------
@@ -172,16 +180,34 @@
                                  breaks[[1]], Inf, 3), # positive 15% and above
                                ncol = 3, byrow = TRUE))
     }
+      
+      # NEW CLASSIFICATION WHERE NEGATIVE-ACCELERATION (pos) = GOOD/STABILISING, NEGATIVE-DECELERATION (neg) = BAD/INTENSIFYING
+    get_accel_brks_neg <- function(r, breaks) {  
+      classify(r, rcl = matrix(c(-Inf, -breaks[[1]], 3, # positive 15% and above (more negative = accelerating)
+                                 -breaks[[1]], breaks[[1]], 2, # Between negative 15% to positive 15% (mid-ish 30%)
+                                 breaks[[1]], Inf, 1), # Infinity to the negative conversion of teh abs 15% (trending to 0 = decelerating)
+                               ncol = 3, byrow = TRUE))
+    }
   
       
   ## Function to do it -------------
-    bivar_classify_global <- function(r_vel, r_acc) {
-      get_vel_brks(r_vel, vel_breaks) * 10 + get_accel_brks(r_acc, accel_breaks) # * 10 means than the coding will end up a 2 digits number for easier categorising (11, 12, 13, 21, 22, 23, 31, 32, 33)
+    # bivar_classify_global <- function(r_vel, r_acc) {   # OLD FUNCTION, DON'T USE
+    #   get_vel_brks(r_vel, vel_breaks) * 10 + get_accel_brks(r_acc, accel_breaks) # * 10 means than the coding will end up a 2 digits number for easier categorising (11, 12, 13, 21, 22, 23, 31, 32, 33)
+    # }
+
+    bivar_classify_global <- function(r_vel, r_acc) { # NEW CLASSIFICATION WHERE NEGATIVE-ACCELERATION = GOOD, NEGATIVE-DECELERATION
+      # vel_class <- get_vel_brks(r_vel, vel_breaks)
+      vel_class <- get_vel_brks(r_vel, vel_hbreaks)
+      acc_class_pos <- get_accel_brks(r_acc, accel_breaks)
+      acc_class_neg <- get_accel_brks_neg(r_acc, accel_breaks)
+      acc_class <- ifel(vel_class == 1, acc_class_neg, acc_class_pos)
+      vel_class * 10 + acc_class
     }
+    
 
       
   ## Checking name order and fixing -------------
-    # term_order <- c("near", "mid", "intermediate", "long")
+    term_order <- c("near", "mid", "intermediate", "long")
     combos <- expand_grid(ssp = ssp_list, term = term_list[2:5])  # adjust indices as needed
     combos
       
@@ -194,8 +220,8 @@
     vel_stack_ordered <- vel_stack[match(nms, vel_nms)] # reorder both stacks to match combos order
     accel_stack_ordered <- accel_stack[match(nms, accel_nms)]
     
-    map_chr(vel_stack_ordered, names) # checking order
-    map_chr(accel_stack_ordered, names)
+      map_chr(vel_stack_ordered, names) # checking order
+      map_chr(accel_stack_ordered, names)
     
     bivar_rasts <- map2(vel_stack_ordered, accel_stack_ordered, bivar_classify_global)
 
@@ -265,11 +291,9 @@
       bar_data <- combos_ssp %>%
         mutate(term = factor(term, levels = term_order)) %>%
         rowwise() %>%
-        reframe(
-          term     = term,
-          category = names(corner_codes),
-          prop     = map_dbl(corner_codes, \(code) mean(values(r, na.rm = TRUE)[, 1] == code) * 100)
-        )
+        reframe(term = term,
+                category = names(corner_codes),
+                prop = map_dbl(corner_codes, \(code) mean(values(r, na.rm = TRUE)[, 1] == code) * 100))
    
       bar <- bar_data %>%
         mutate(category = factor(category, levels = names(corner_pal))) %>%
@@ -293,10 +317,10 @@
         plot_annotation(tag_levels = "a") &
         theme(plot.margin = margin(10, 10, 10, 10))
    
-      o_nm <- paste0(plot_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, "_mixedthresholds.png")
+      o_nm <- paste0(plot_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, "_mixedthresholds_30vhist_15ahist_revaccel.png")
       ggsave(filename = o_nm, plot = fig, width = 12, height = 20)
       
-      o_nm_pdf <- paste0(pdf_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, "_mixedthresholds.pdf")
+      o_nm_pdf <- paste0(pdf_fol, "/velocity_acceleration_bivariate_", ssp, "_pal-", pal_name, "_mixedthresholds_30vhist_15ahist_revaccel.pdf")
       ggsave(filename = o_nm_pdf, plot = fig, width = 12, height = 20)
       
       message("Saved: ", basename(o_nm))
@@ -320,6 +344,11 @@
                   "Fast velocity, Decelerating" ="#008089",
                   "Fast velocity, Accelerating"="#001911")
   walk(ssp_list, ~ plot_bivariate(.x, pal_name = "tealochre1"))
+  
+  
+  
+  
+  
   
   
   
