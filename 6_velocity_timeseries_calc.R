@@ -84,7 +84,6 @@
 # Get rasters in df format -----------------------------------------------------
   
   all_files <- dir(vocc_fol, full.names = TRUE)
-  f <- files[2]
 
   do_mask_df <- function(f){
     

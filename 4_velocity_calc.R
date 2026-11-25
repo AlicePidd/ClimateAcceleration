@@ -1,4 +1,4 @@
-# Computing annual AND decadal velocity (km.decade) from annual SST layers, using a 21-year rolling window
+# Computing annual AND decadal climate velocity (km.decade) from annual SST layers, using a 21-year rolling window
   # Written by Dave S and Alice P
     # 5 March 2026
 
@@ -78,11 +78,6 @@
   files <- dir(sst_fol, full.names = TRUE) %>% 
     str_subset(., "ssp119|ssp534-over|CESM2-WACCM|GFDL-ESM4", negate = TRUE) # None of these files
   oisst_files <- dir(oisst_fol, full.names = TRUE)
-  
-  # term = "all"
-  # f <- files[44]
-  # f <- oisst_files
-  
   
   get_velocity <- function(f, yrs, term) {
     

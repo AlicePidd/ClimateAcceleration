@@ -35,9 +35,7 @@
   
     files <- dir(accel_fol, full.names = TRUE, pattern = ".RDS") %>% 
       str_subset("historical", negate = TRUE)
-    files
-    f <- files[2]
-  
+
     get_accel_dfs <- function(f) {
       ssp <- basename(f) %>% 
         str_split_i(., "_", 3)
@@ -95,6 +93,7 @@
   
   
   ## Do it for the OISST file -----------
+    
     files <- dir(accel_fol, full.names = TRUE, pattern = "historical")
     files
     

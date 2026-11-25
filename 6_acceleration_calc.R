@@ -24,13 +24,10 @@
   
 # Folders ----------------------------------------------------------------------
 
-  fns_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
-  # vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "") # Timeseries velocity by esm, ssp
+  fn_fol <- make_folder(source_disk, "_terra_vocc", "") # From VoCC package
   vocc_dec_fol <- make_folder(source_disk, "2_velocity_rolling", "decadal")
   
-  # accel_yr_fol <- make_folder(source_disk, "4_acceleration_aus", "annual") # Aus files
   accel_dec_fol <- make_folder(source_disk, "4_acceleration_aus", "decadal") # Aus files
-  # accel_term_yr_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "annual") # Aus files
   accel_term_dec_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "decadal") # Aus files
   
   
@@ -38,7 +35,7 @@
   
 # Source the velocity functions ------------------------------------------------
   
-  dir(fns_fol, full.names = TRUE, pattern = "tempTrend") %>% # Get just the one fn
+  dir(fn_fol, full.names = TRUE, pattern = "tempTrend") %>% # Get just the one fn
     map(source)
 
   
@@ -54,17 +51,6 @@
   mid_range <- 2041:2060
   intermediate_range <- 2061:2080
   long_range <- 2081:2090
-  
-
-  # # For tests
-  # files <- dir(vocc_dec_fol, full.names = TRUE) %>%
-  #   str_subset(., "ssp119", negate = TRUE) %>%
-  #   str_subset(., "ssp534-over", negate = TRUE)
-  # f <- files[1] # Just pick a file
-  # yrs <- as.character(mid_range)
-  # ssp <- "ssp245"
-  # term <- "mid"
-
   
 
     
@@ -110,16 +96,6 @@
         return(slope)
       }
     
-      # SSP layers 
-        # ssp_out_yr <- map(term_list[2:5], function(term) { #yearly acceleration
-        #   message("Processing annual: ", term, "-term")
-        #   map(files, ~do_ssps(.x, term, 1))
-        # }) %>%
-        #   flatten() %>% 
-        #   rast()
-        # saveRDS(ssp_out_yr, file = paste0(accel_yr_fol, "/acceleration_annual_", ssp, "_aus.RDS"))
-        # Each file has 53 layers: 1 for the historical OISST layer, and 1 per ESM, SSP, term combo (x52)
-      
         ssp_out_dec <- map(term_list[2:5], function(term) { # decadal acceleration
           message("Processing decadal: ", term, "-term")
           map(files, ~do_ssps(.x, term, "decadal"))
@@ -128,12 +104,6 @@
           rast()
         saveRDS(ssp_out_dec, file = paste0(accel_dec_fol, "/acceleration_decadal-velocity_", ssp, "_aus.RDS"))
 
-      # Term layers
-        # ssp_term_yr <- map(term_list[2:5], ~{
-        #   tt <- terra::subset(ssp_out_yr, grep(.x, names(ssp_out_yr), value = TRUE))
-        #   saveRDS(tt, file = paste0(accel_term_yr_fol, "/acceleration_annual_", ssp, "_", .x, "-term_aus.RDS"))
-        # })
-        
         ssp_term_dec <- map(term_list[2:5], ~{
           tt <- terra::subset(ssp_out_dec, grep(.x, names(ssp_out_dec), value = TRUE))
           saveRDS(tt, file = paste0(accel_term_dec_fol, "/acceleration_decadal-velocity_", ssp, "_", .x, "-term_aus.RDS"))
@@ -149,9 +119,6 @@
   tic()
   walk(ssp_list, get_fastness)
   toc() # 25 seconds on Alice's machine
-  
-  
-
 
   
   

@@ -14,8 +14,8 @@
   
 # Folders ----------------------------------------------------------------------
 
-  # vocc_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") # Use the rasts so can crop them
-  df_fol <- make_folder(source_disk, "3_velocity_decadal_median_timeseries", "dfs") # Use the rasts so can crop them
+  vocc_fol <- make_folder(source_disk, "2_velocity_rolling_terms", "decadal") 
+  df_fol <- make_folder(source_disk, "3_velocity_decadal_median_timeseries", "dfs") 
   plot_fol <- make_folder(source_disk, "6_velocity_aus_plot", "timeseries")
   fig_fol <- make_folder(source_disk, "_figures", "")
   
@@ -61,7 +61,6 @@
     #   1 mid    4640
     #   2 north  3604
     #   3 south  3201
-    
       ## Ehh. I'll just state it on the figure for now.
   
   
@@ -226,58 +225,5 @@
            width = 8, height = 10, dpi = 300)
     ggsave(a, file = paste0(fig_fol, "/oceania_graticules_regions.png"),
            width = 8, height = 10, dpi = 300)
-  
-  
-  
-  # ## Cut EEZ to be at each region for the figure (didn't end up using this, bit of tomfoolery I couldn't be bothered to fix) -----------
-  #   bb <- st_bbox(eez_shp)
-  #   
-  #   # helper to build a band
-  #   make_band <- function(ymin, ymax) {
-  #     st_as_sfc(st_bbox(c(
-  #       xmin = as.numeric(bb["xmin"]),
-  #       xmax = as.numeric(bb["xmax"]),
-  #       ymin = as.numeric(ymin),
-  #       ymax = as.numeric(ymax)
-  #     ), crs = st_crs(eez_shp)))
-  #   }
-  #   
-  #   band_north <- make_band(-20, bb["ymax"])
-  #   band_mid   <- make_band(-35, -20)
-  #   band_south <- make_band(bb["ymin"], -35)
-  #   
-  #   # intersection instead of crop
-  #   eez_north <- st_crop(eez_shp, band_north)
-  #   eez_mid   <- st_crop(eez_shp, band_mid)
-  #   eez_south <- st_crop(eez_shp, band_south)
-  # 
-  # 
-  # a <- ggplot() +
-  #   geom_sf(data = eez_north,
-  #           lwd = NA,
-  #           fill = "yellow",
-  #           alpha = 0.5) +
-  #   geom_sf(data = eez_mid,
-  #           lwd = NA,
-  #           fill = "dodgerblue2",
-  #           alpha = 0.5) +
-  #   geom_sf(data = eez_south,
-  #           lwd = NA,
-  #           fill = "green",
-  #           alpha = 0.5) +
-  #   geom_sf(data = oceania_stanford_shp,
-  #           lwd = NA,
-  #           fill = "grey80") +
-  #   geom_sf(data = line1_sf, color = "grey30", linetype = "dashed", size = 0.5) +
-  #   geom_sf(data = line2_sf, color = "grey30", linetype = "dashed", size = 0.5) +
-  #   theme_void() # No graticules
-  #   # theme_minimal() # To include graticules
-  # 
-  # ggsave(a, file = paste0(fig_fol, "/oceania_graticules_regions.pdf"),
-  #        width = 8, height = 10, dpi = 300)
-  # ggsave(a, file = paste0(fig_fol, "/oceania_graticules_regions.png"),
-  #        width = 8, height = 10, dpi = 300)
-  
-  
   
   

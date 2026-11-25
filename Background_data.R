@@ -10,7 +10,6 @@
   source_disk <- "/Volumes/AliceShield/acceleration_data"
 
   shps_fol <- make_folder(source_disk, "", "_shapefiles")
-  # con_shps_fol <- make_folder(source_disk, "", "shapefiles")
   helper_fol <- make_folder(source_disk, "", "_helpers")
   
   
@@ -37,10 +36,6 @@
   reez <- terra::rasterize(eez_shp, base_r) # Base raster for just MPAs
   rmpa <- terra::rasterize(mpa_shp, base_r, touches = TRUE) # Base raster for all MPAs, including GBR
 
-  # base_grid <- readRDS(paste0(con_shps_fol, "/base_polygonsf_grid_ID.RDS"))
-  # mpa_ranges <- readRDS(paste0(helper_fol, "/MPA_ID_by_network.RDS"))
-  # network_mpas <- readRDS(paste0(helper_fol, "/MPA_ID_by_network.RDS"))
-  
   
   
 # Create landsea mask using the OISST file (it's better) -----------------------
@@ -57,8 +52,4 @@
   # Load it
   mask_land <- readRDS(paste0(shps_fol, "/mask.RDS"))
 
-  
-  
-  
-  
   

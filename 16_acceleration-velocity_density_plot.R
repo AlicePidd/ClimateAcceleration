@@ -60,19 +60,7 @@
     #     <chr>        <dbl> <dbl>
     #   1 acceleration    -5    10
     #   2 velocity         9   216
-  
-  
-  # # Truncate per var at q95 only
-  #   plot_df1 <- plot_df %>%
-  #     left_join(q_future, by = "var") %>%
-  #     mutate(value = pmin(value, q95)) %>%
-  #     dplyr::select(-q5, -q95)
-  # 
-  #   hist_df1 <- hist_df %>%
-  #     left_join(q_hist, by = "var") %>%
-  #     mutate(value = pmin(value, q95)) %>%
-  #     dplyr::select(-q5, -q95)
-    
+
     
 # Truncate per var at q5 and q95
     plot_df2 <- plot_df %>%
@@ -90,7 +78,6 @@
   
 # Plot -------------------------------------------------------------------------
   
-  # term_order  <- c("near", "mid", "intermediate", "long")
   term_order <- c("recent", "near", "mid", "intermediate", "long")
   zone_cols   <- c("mpas" = "#0a9396", "nonmpas" = "#EE9B00")
   df <- plot_df2
@@ -158,7 +145,6 @@
     p_velocity
     
     p_accel <- plot_df2 %>% 
-      # filter(var == "acceleration") %>% 
       filter(term == "mid") %>% 
       make_plot(., "acceleration")
     p_accel
@@ -195,11 +181,5 @@
     ggsave(paste0(png_fol, "/density_accel_all_terms_0line.png"), p_accel_supp, width = 10,  height = 12)
     ggsave(paste0(pdf_fol, "/density_accel_all_terms_0line.pdf"), p_accel_supp, width = 10,  height = 12)
     
-  
 
-    
-    
-# Plot circle things for 
-
-    
     

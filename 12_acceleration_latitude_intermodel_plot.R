@@ -2,9 +2,9 @@
   # Written by Alice P
     # 2 Apr 2026
 
-# Median acceleration at each 1° of latitude for each ESM - plotting the median across all ESM medians for each 1°, and a ribbon with the min and max medians across each ESM.
+  # Median acceleration at each 1° of latitude for each ESM - plotting the median across all ESM medians for each 1°, and a ribbon with the min and max medians across each ESM.
 
-# This plot the INTERMODEL SPREAD of acceleration by latitude
+  # This plot the INTERMODEL SPREAD of acceleration by latitude
 
 
 # Helpers ----------------------------------------------------------------------
@@ -18,8 +18,6 @@
 # Folders ----------------------------------------------------------------------
 
   acc_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "decadal")
-  # median_dfs_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "dfs")
-  # median_rast_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
   plot_fol <- make_folder(source_disk, "7_acceleration_aus_plot", "latitude") # Aus files
   
   
@@ -27,8 +25,7 @@
 # Read all files, extract values + lat --------------------------
   
   files <- dir(acc_fol, full.names = TRUE, pattern = ".RDS")
-  f <- files[2]
-  
+
   raw_dat <- map(files, function(f) {
     r <- readRDS(f)
 
@@ -37,11 +34,9 @@
       bind_cols(crds(r, df = TRUE, na.rm = FALSE) %>% 
                   as_tibble()) %>%
       pivot_longer(cols = -c(x, y), names_to = "layer", values_to = "accel") %>%
-      mutate(
-        ssp  = str_split_i(layer, "_", 3),
-        esm  = str_split_i(layer, "_", 4),
-        term = str_split_i(layer, "_", 5)
-      ) %>%
+      mutate(ssp  = str_split_i(layer, "_", 3),
+             esm  = str_split_i(layer, "_", 4),
+             term = str_split_i(layer, "_", 5)) %>%
       dplyr::select(lat = y, accel, ssp, esm, term)
     
     med_vals <- vals %>% 
@@ -52,7 +47,6 @@
     return(med_vals)
   }) %>%
     bind_rows() %>%
-    # filter(!is.na(accel))
     filter(!is.na(med_lat_accel))
   
   raw_dat
@@ -65,19 +59,6 @@
   raw_dat <- raw_dat %>%
     mutate(term = factor(term, levels = term_levels, labels = term_labels))
   raw_dat
-  
-  # esm_meds <- raw_dat %>% 
-  #   group_by(lat, esm, ssp, term) %>%
-  #   summarise(esm_med = median(accel, na.rm = TRUE),
-  #             .groups = "drop")
-  # esm_meds
-  #   
-  # all_med <- raw_dat %>%
-  #   group_by(lat, ssp, term) %>%
-  #   summarise(
-  #     med = median(accel, na.rm = TRUE),
-  #     .groups = "drop")
-  # all_med
   
   
 # Get median per lat across all ESMs (per ssp-term) ----------------------------

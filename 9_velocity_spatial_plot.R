@@ -17,15 +17,7 @@
 # Folders ----------------------------------------------------------------------
 
   vocc_df_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "dfs/cropped")
-  # vocc_rast_fol <- make_folder(source_disk, "3_velocity_decadal_median_terms", "rasts/cropped")
   plot_fol <- make_folder(source_disk, "6_velocity_aus_plot", "spatial")
-
-  
-  files <- dir(vocc_df_fol, full.names = TRUE)
-  files
-  # f <- files[2]
-  # f
-  # d <- readRDS(f)
 
   
   
@@ -53,15 +45,8 @@
   pal_div_heat <- colorRampPalette(c("#001219", "#005F73", "#0a9396", "#C9E7DD",
                                      "#F7FBFF",
                                      "#FFEDCB", "#ee9b00", "#ca6702", "#79080C"))(100) # As a colour ramp
-  # pal_div_heat <- c("#001219", "#005F73", "#0a9396", "#52b2a3", "#94d2bd", "#C9E7DD", "#F7FBFF", "#FFEDCB","#FFC672", "#ee9b00", "#ca6702", "#ae2012", "#9b2226") # Manual version
-  
+
   pal_div_RdBu <- rev(RColorBrewer::brewer.pal(11, "RdBu"))
-  
-  # pal_div_RdBualt <- c("#08519C", "#4393C3", "#92C5DE", "#D1E5F0", "#F7FBFF", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
-  # pal_div_BrBG <- rev(RColorBrewer::brewer.pal(11, "BrBG"))
-  # pal_div_BlOr <- c("#005F73", "#208f99", "#52c4cc", "#99faff", "#ccfeff", "#e6ffff", "#ffe6cc", "#ffad66", "#ff8f32", "#cc5801", "#994000") # Manual version
-  # pal_div_coco <- rev(c("#881d00", "#af6125", "#f4e3c7", "#F7FBFF", "#1bb5af", "#0076bb", "#172869")) # Manual version
-  # pal_div_geyser <- c("#018080", "#70a494", "#b4c8a8", "#F7FBFF", "#edbb8a", "#de8a5a", "#ca562d") # Manual version
 
   
   
@@ -142,13 +127,9 @@
       labs(title = paste0("Median decadal velocity -- ", ssp)) +
       theme_classic(base_size = 10) +
       theme(legend.position = "bottom",
-            legend.title    = element_text(size = 8),
-            legend.text     = element_text(size = 7),
-            plot.subtitle   = element_text(size = 9, colour = "grey30"))
-    
-    # o_nm <- paste0(plot_fol, "/spatial_median_velocity_decadal_cropped_", ssp, 
-    #                "_pal-", pal_name, "_", lim_method, "_lims", lims, ".png")
-    # ggsave(filename = o_nm, plot = p, width = 8, height = 20, dpi = 600)
+            legend.title = element_text(size = 8),
+            legend.text = element_text(size = 7),
+            plot.subtitle = element_text(size = 9, colour = "grey30"))
     
     o_nm <- paste0(plot_fol, "/spatial_median_velocity_decadal_cropped_", ssp, 
                    "_pal-", pal_name, "_", lim_method, "_lims", lims)
@@ -169,34 +150,8 @@
     walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
                                        lims = IQR_lims, lim_method = "IQR",
                                        pal = pal_div_heat, pal_name = "div_heat"))
-    # walk(ssp_list, ~ plot_velocity_future(.x, future_files, 
-    #                                 lims = 200, lim_method = "arbitrary",
-    #                                 pal = pal_div_heat, pal_name = "div_heat"))
-    
-  # # RdBu div palette
-  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
-  #                                   lims = q5q95_lims, lim_method = "Q5-Q95",
-  #                                   pal = pal_div_RdBu, pal_name = "div_RdBu"))
-  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
-  #                                      lims = IQR_lims, lim_method = "IQR",
-  #                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
-  #   # walk(ssp_list, ~ plot_velocity_future(.x, future_files,
-  #   #                                 lims = 200, lim_method = "arbitrary",
-  #   #                                 pal = pal_div_RdBu, pal_name = "div_RdBu"))
-  # 
-  # # Coco div palette
-  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
-  #                                   lims = q5q95_lims, lim_method = "Q5-Q95",
-  #                                   pal = pal_div_coco, pal_name = "div_coco"))
-  #   walk(ssp_list, ~ plot_velocity_future(.x, future_files,
-  #                                      lims = q25q75_lims, lim_method = "IQR",
-  #                                      pal = pal_div_RdBu, pal_name = "div_RdBu"))
-  #   # walk(ssp_list, ~ plot_velocity_future(.x, future_files,
-  #   #                                 lims = 200, lim_method = "arbitrary",
-  #   #                                 pal = pal_div_coco, pal_name = "div_coco"))
-      
-      
-      
+
+
       
 # Calculate global quantiles by which to scale the plots -----------------------
       

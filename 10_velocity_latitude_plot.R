@@ -16,7 +16,6 @@
   
 # Folders ----------------------------------------------------------------------
 
-  vocc_fol <- make_folder(source_disk, "2_velocity_rolling_annual", "")
   vocc_term_fol <- make_folder(source_disk, "2_velocity_rolling_annual_termsplit", "")
   plot_fol <- make_folder(source_disk, "6_velocity_aus_plot", "latitude")
 
@@ -27,9 +26,6 @@
   files <- dir(vocc_term_fol, full.names = TRUE) %>% 
     str_subset(., "534-over", negate = TRUE) %>% 
     str_subset(., "ssp119", negate = TRUE)
-  files
-
-  # f <- files[2]
 
   slope_lat <- function(f) {
     
@@ -100,13 +96,8 @@
 
 # Plot -------------------------------------------------------------------------
   
-  # heat_pal <- c("#244e57", "#378890", "#70c0ba", "#CDF1EF", "#FFFDF4", "#f4c659", "#d9792e", "#af2213", "#871c0f")
   pal <- c("#FFFDF4", "#f4c659", "#d9792e", "#af2213", "#871c0f")
-  # heat_pal <- c("#241d1d", "#5b2124", "#8d3431", "#bf552e", "#e8a800")
-  # heat_pal <- c("#0f1926", "#025940", "#02734b", "#068c33", "#01a62c")
-  # RdBu_pal <- paletteer::paletteer_c("scico::vik", 11)
-  # RdBu_pal <- khroma::color("BuRd")(11)
-  
+
   plot_lat_velocity <- function(m, lim, lab) {
     lat_plot <- ggplot() +
       geom_tile(data = recent_rows, aes(x = term, y = lat, fill = .data[[m]])) + 
@@ -124,10 +115,7 @@
   
   params <- list(list(m = "median_vocc_dec", lim = c(-50, 450), lab = "decade"),
                  list(m = "median_vocc_yr",  lim = c(-5, 45),   lab = "year"))
-  
-  # pals <- list(heatpal = heat_pal, 
-  #              RdBupal = RdBu_pal)
-  
+
   walk(params, function(p) {
     plot_lat_velocity(m = p$m, lim = p$lim, lab = p$lab)
   })

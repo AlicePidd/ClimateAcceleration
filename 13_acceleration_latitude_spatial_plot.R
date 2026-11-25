@@ -2,15 +2,12 @@
   # Written by Alice P
     # 5 Apr 2026
 
-# Median acceleration at each 1° of latitude for each ESM - plotting the median across all ESM medians for each 1°, and a ribbon with the min and max value at each 1° lat.
+  # Median acceleration at each 1° of latitude for each ESM - plotting the median across all ESM medians for each 1°, and a ribbon with the min and max value at each 1° lat.
 
-# This plot the SPATIAL SPREAD of acceleration by latitude
+  # This plot the SPATIAL SPREAD of acceleration by latitude
 
 
-# Need:
-  # ensemble median per lat
-  # spread of values across each lat (min max of the median)
-
+  
 
 # Helpers ----------------------------------------------------------------------
 
@@ -24,9 +21,6 @@
 # Folders ----------------------------------------------------------------------
 
   acc_fol <- make_folder(source_disk, "4_acceleration_aus_terms", "decadal")
-  # acc_esm_fol <- make_folder(source_disk, "5_acceleration_aus_ESMs_terms", "dfs")
-  # median_dfs_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "dfs")
-  # median_rast_fol <- make_folder(source_disk, "5_acceleration_aus_median_terms", "rasts")
   plot_fol <- make_folder(source_disk, "7_acceleration_aus_plot", "latitude") # Aus files
   
   
@@ -35,7 +29,6 @@
 # Read all files, extract values + lat --------------------------
   
   files <- dir(acc_fol, full.names = TRUE, pattern = ".RDS")
-  # f <- files[2]
 
   raw_dat <- map(files, function(f) {
     r <- readRDS(f)
@@ -45,11 +38,9 @@
       bind_cols(crds(r, df = TRUE, na.rm = FALSE) %>% 
                   as_tibble()) %>%
       pivot_longer(cols = -c(x, y), names_to = "layer", values_to = "accel") %>%
-      mutate(
-        ssp  = str_split_i(layer, "_", 3),
-        esm  = str_split_i(layer, "_", 4),
-        term = str_split_i(layer, "_", 5)
-      ) %>%
+      mutate(ssp  = str_split_i(layer, "_", 3),
+             esm  = str_split_i(layer, "_", 4),
+             term = str_split_i(layer, "_", 5)) %>%
       dplyr::select(lat = y, accel, ssp, esm, term)
     
     med_vals <- vals %>%
@@ -73,10 +64,7 @@
   # Factor terms in both datasets
     term_levels <- term_list
     term_labels  <- c("Recent-term", "Near-term", "Mid-term", "Intermediate-term", "Long-term")
-    # term_levels <- term_list[2:5] %>% 
-    #   paste0(., "-term")
-    # term_labels  <- c("Near-term", "Mid-term", "Intermediate-term", "Long-term")
-  
+
   raw_dat <- raw_dat %>%
     mutate(term = factor(term, levels = term_levels, labels = term_labels))
   raw_dat
@@ -159,5 +147,3 @@
   o_nm <- paste0(plot_fol, "/median_IQR_acceleration_across_latitude_ssp-term.png") 
   ggsave(filename = o_nm, plot = p, height = 6, width = 6, dpi = 300)
   
-    
-    
